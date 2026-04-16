@@ -6,34 +6,20 @@
 <title>AIレポート作成アシスタント</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #f5f3ef;
-    --surface: #ffffff;
-    --border: #e2e0da;
-    --border-strong: #c8c5be;
-    --text: #1a1a18;
-    --text-muted: #6b6860;
-    --text-hint: #a09e9a;
-    --accent: #E8641A;
-    --accent-hover: #cf5815;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --bg: #f5f3ef; --surface: #ffffff; --border: #e2e0da; --border-strong: #c8c5be;
+    --text: #1a1a18; --text-muted: #6b6860; --text-hint: #a09e9a;
+    --accent: #E8641A; --accent-hover: #cf5815;
+    --radius-md: 8px; --radius-lg: 12px;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
-
   body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
-
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
   .logo { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; }
   .header-title { font-size: 16px; font-weight: 600; }
   .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-
-  .save-indicator { margin-left: auto; font-size: 12px; color: var(--text-hint); display: flex; align-items: center; gap: 5px; }
-  .save-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; }
-
+  .save-badge { margin-left: auto; font-size: 11px; color: #27500a; background: #eaf3de; padding: 3px 10px; border-radius: 12px; display: none; flex-shrink: 0; }
   .container { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
-
   .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
   .mode-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; cursor: pointer; transition: border-color 0.15s; }
   .mode-card:hover { border-color: var(--border-strong); }
@@ -41,91 +27,65 @@
   .mode-icon { font-size: 20px; margin-bottom: 6px; }
   .mode-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
   .mode-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-
   .step-nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
   .step-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; font-family: var(--font); }
-  .step-btn:hover { background: var(--bg); }
   .step-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
   .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
-
   label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
-
-  input[type=text], input[type=number], select, textarea {
-    width: 100%; border: 1px solid var(--border-strong); border-radius: var(--radius-md);
-    padding: 9px 12px; font-size: 14px; background: var(--surface); color: var(--text);
-    font-family: var(--font); transition: border-color 0.15s; outline: none;
-  }
-  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
-    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,100,26,0.12);
-  }
+  input[type=text], input[type=number], select, textarea { width: 100%; border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 9px 12px; font-size: 14px; background: var(--surface); color: var(--text); font-family: var(--font); transition: border-color 0.15s; outline: none; }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,100,26,0.12); }
   textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
   input[type=number] { -moz-appearance: textfield; }
   input[type=number]::-webkit-inner-spin-button { opacity: 1; }
-
   .char-wrap { position: relative; }
   .char-unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none; }
   .char-wrap input { padding-right: 36px; }
-
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .field { margin-bottom: 14px; }
   .tip { font-size: 12px; color: var(--text-hint); margin-top: 5px; }
-
-  /* File upload */
-  .file-upload-area {
-    border: 2px dashed var(--border-strong); border-radius: var(--radius-md);
-    padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.15s;
-    background: var(--bg); margin-top: 8px;
-  }
-  .file-upload-area:hover, .file-upload-area.dragover { border-color: var(--accent); background: #fff8f5; }
+  .file-upload-area { border: 2px dashed var(--border-strong); border-radius: var(--radius-md); padding: 1.25rem; text-align: center; cursor: pointer; background: var(--bg); margin-top: 8px; transition: border-color 0.15s; }
+  .file-upload-area:hover { border-color: var(--accent); }
   .file-upload-area input[type=file] { display: none; }
-  .file-upload-icon { font-size: 24px; margin-bottom: 6px; }
   .file-upload-text { font-size: 13px; color: var(--text-muted); }
-  .file-upload-text span { color: var(--accent); font-weight: 500; cursor: pointer; }
+  .file-upload-text span { color: var(--accent); font-weight: 500; }
   .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   .file-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 10px; font-size: 13px; }
-  .file-item-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-item-size { font-size: 11px; color: var(--text-hint); flex-shrink: 0; }
-  .file-item-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
-  .file-item-remove:hover { color: #e24b4a; }
-
+  .file-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; padding: 0 2px; line-height: 1; font-family: var(--font); }
+  .file-remove:hover { color: #e24b4a; }
   .btn-primary { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s, opacity 0.15s; font-family: var(--font); margin-top: 4px; }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-
   .btn-secondary { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; font-family: var(--font); }
   .btn-secondary:hover { background: var(--bg); }
-
-  .btn-danger { padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid #f09595; background: #fcebeb; font-size: 12px; cursor: pointer; color: #791f1f; transition: background 0.15s; font-family: var(--font); }
-  .btn-danger:hover { background: #f7c1c1; }
-
+  .btn-danger { padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid #f09595; background: #fcebeb; font-size: 12px; cursor: pointer; color: #791f1f; font-family: var(--font); }
   .nav-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
   .nav-btns .btn-primary { max-width: 180px; }
-
   .loading { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; padding: 1rem 0; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
   .dot:nth-child(2) { animation-delay: 0.2s; }
   .dot:nth-child(3) { animation-delay: 0.4s; }
   @keyframes pulse { 0%,80%,100%{opacity:0.25} 40%{opacity:1} }
-
   .result-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; min-height: 120px; }
   .result-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-
   .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: #e6f1fb; color: #0c447c; font-weight: 500; }
   .tag.exp { background: #eaf3de; color: #27500a; }
   .copy-ok { font-size: 12px; color: #27500a; font-weight: 500; }
-  .hidden { display: none !important; }
   .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .result-header .card-title { margin-bottom: 0; }
-
+  .hidden { display: none !important; }
+  .preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .preview-modal { background: var(--surface); border-radius: var(--radius-lg); max-width: 700px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
+  .preview-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .preview-title { font-size: 15px; font-weight: 600; }
+  .preview-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 0 4px; font-family: var(--font); line-height: 1; }
+  .preview-body { padding: 1.25rem; overflow-y: auto; flex: 1; font-size: 14px; line-height: 1.85; white-space: pre-wrap; color: var(--text); }
   .footer { text-align: center; padding: 2rem 1rem; font-size: 12px; color: var(--text-hint); }
-
-  @media (max-width: 560px) {
-    .row2 { grid-template-columns: 1fr; }
-    .mode-switch { grid-template-columns: 1fr; }
-    .container { padding: 1.25rem 0.75rem 3rem; }
-  }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .mode-switch { grid-template-columns: 1fr; } .container { padding: 1.25rem 0.75rem 3rem; } }
 </style>
 </head>
 <body>
@@ -136,10 +96,7 @@
     <div class="header-title">AIレポート作成アシスタント</div>
     <div class="header-sub">参考資料とメモを入れるだけで自然なレポートを生成</div>
   </div>
-  <div class="save-indicator" id="saveIndicator" style="display:none">
-    <div class="save-dot"></div>
-    <span>自動保存済み</span>
-  </div>
+  <div class="save-badge" id="saveBadge">✓ 自動保存済み</div>
 </header>
 
 <main class="container">
@@ -155,458 +112,406 @@
       <div class="mode-desc">目的・方法・結果・考察の構成に特化</div>
     </div>
   </div>
-  <div id="stepNav" class="step-nav"></div>
-  <div id="mainContent"></div>
+
+  <div class="step-nav" id="stepNav"></div>
+
+  <!-- 講義モード -->
+  <div id="lec-panels">
+    <div class="step-panel" id="lec-step1">
+      <div class="card">
+        <p class="card-title">基本情報</p>
+        <div class="row2 field">
+          <div><label>学部・専攻の種類</label>
+            <select id="l-dept"><option value="理系">理系（理工・医・農・情報など）</option><option value="文系">文系（法・経・文・社会など）</option><option value="その他">その他・学際系</option></select></div>
+          <div><label>レポートの種類</label>
+            <select id="l-ltype"><option value="論述レポート">論述レポート（意見・考察）</option><option value="調査レポート">調査・文献レポート</option><option value="書評レポート">書評・要約レポート</option></select></div>
+        </div>
+        <div class="field">
+          <label>テーマ・課題タイトル <span style="color:#e24b4a">*</span></label>
+          <input type="text" id="l-theme" placeholder="例：地球温暖化が農業に与える影響について">
+        </div>
+        <div class="row2">
+          <div><label>文字数の目安</label><div class="char-wrap"><input type="number" id="l-length" value="1200" min="100" max="20000" step="100"><span class="char-unit">字</span></div></div>
+          <div><label>学年</label><select id="l-grade"><option>学部1年生</option><option>学部2年生</option><option selected>学部3年生</option><option>学部4年生</option><option>修士1年生</option><option>修士2年生</option><option>博士課程</option></select></div>
+        </div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+        <button class="btn-danger" onclick="resetAll()">入力をリセット</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="lec-step2">
+      <div class="card">
+        <p class="card-title">講義のレジュメ・メモ</p>
+        <label>授業のレジュメや自分のメモをそのまま貼り付けてください</label>
+        <textarea id="l-memo" placeholder="箇条書きでもキーワードだけでもOKです&#10;例：・温暖化で平均気温2℃上昇&#10;・収穫量最大30%減少（FAO 2022）"></textarea>
+        <p class="tip">キーワードだけでも大丈夫です</p>
+      </div>
+      <div class="card">
+        <p class="card-title">参考資料のアップロード（任意）</p>
+        <label>参考にしたいファイルをアップロードしてください</label>
+        <div class="file-upload-area" onclick="document.getElementById('l-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="event.preventDefault();this.style.borderColor='';handleFiles(event.dataTransfer.files)">
+          <input type="file" id="l-file-input" multiple accept=".txt,.pdf,.md" onchange="handleFiles(this.files)">
+          <div style="font-size:24px;margin-bottom:6px">📂</div>
+          <div class="file-upload-text">ドラッグ＆ドロップ または <span>ファイルを選択</span></div>
+          <div style="font-size:11px;color:var(--text-hint);margin-top:4px">対応形式：txt / pdf / md（各5MBまで）</div>
+        </div>
+        <div class="file-list" id="file-list"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">参考にしたい文章（任意）</p>
+        <textarea id="l-reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..."></textarea>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+        <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="lec-step3">
+      <div class="card">
+        <p class="card-title">生成オプション</p>
+        <div class="row2">
+          <div><label>文体のスタイル</label><select id="l-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
+          <div><label>AI検知回避の強度</label><select id="l-humanize"><option value="標準">標準（自然な文章）</option><option value="強め">強め（より人間らしい表現）</option><option value="最強">最強（独自表現を最大化）</option></select></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="l-genBtn" onclick="generateReport('lecture')">✦ レポートを生成する</button>
+      <div id="l-loading" class="hidden" style="margin-top:1rem">
+        <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="l-loadingMsg">AIがレポートを作成しています...</span></div>
+      </div>
+      <div id="l-resultArea" class="hidden" style="margin-top:1.5rem">
+        <div class="card">
+          <div class="result-header"><p class="card-title">生成されたレポート</p><span class="tag">講義レポート</span></div>
+          <div class="result-box" id="l-resultText"></div>
+          <div class="result-actions">
+            <button class="btn-secondary" onclick="copyResult('l')">コピー</button>
+            <span id="l-copyOk" class="copy-ok hidden">✓ コピーしました</span>
+            <button class="btn-secondary" onclick="openPreview('l')">プレビュー</button>
+            <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px"><button class="btn-secondary" onclick="goStep(2)">← 戻る</button></div>
+    </div>
+  </div>
+
+  <!-- 実験モード -->
+  <div id="exp-panels" class="hidden">
+    <div class="step-panel" id="exp-step1">
+      <div class="card">
+        <p class="card-title">実験の基本情報</p>
+        <div class="field"><label>実験タイトル・科目名 <span style="color:#e24b4a">*</span></label><input type="text" id="e-title" placeholder="例：酢酸エチルの合成と精製"></div>
+        <div class="row2 field">
+          <div><label>文字数の目安</label><div class="char-wrap"><input type="number" id="e-length" value="1200" min="100" max="20000" step="100"><span class="char-unit">字</span></div></div>
+          <div><label>学年</label><select id="e-grade"><option>学部1年生</option><option>学部2年生</option><option selected>学部3年生</option><option>学部4年生</option><option>修士1年生</option><option>修士2年生</option><option>博士課程</option></select></div>
+        </div>
+        <div class="field"><label>実験の目的・仮説</label><textarea id="e-purpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。"></textarea></div>
+        <div><label>使用器具・試薬</label><textarea id="e-equip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px"></textarea></div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+        <button class="btn-danger" onclick="resetAll()">入力をリセット</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="exp-step2">
+      <div class="card"><p class="card-title">実験手順</p><textarea id="e-method" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱"></textarea></div>
+      <div class="card"><p class="card-title">実験結果・測定データ <span style="color:#e24b4a;font-size:13px">*</span></p><textarea id="e-result" placeholder="例：&#10;・反応前の質量：12.3g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）"></textarea></div>
+      <div class="card"><p class="card-title">考察のポイント・気づき</p><textarea id="e-discussion" placeholder="例：・収率が低かった原因は分液操作での損失か&#10;・沸点が理論値と一致→純度は高い"></textarea></div>
+      <div class="card">
+        <p class="card-title">参考資料のアップロード（任意）</p>
+        <div class="file-upload-area" onclick="document.getElementById('e-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="event.preventDefault();this.style.borderColor='';handleFiles(event.dataTransfer.files)">
+          <input type="file" id="e-file-input" multiple accept=".txt,.pdf,.md" onchange="handleFiles(this.files)">
+          <div style="font-size:24px;margin-bottom:6px">📂</div>
+          <div class="file-upload-text">ドラッグ＆ドロップ または <span>ファイルを選択</span></div>
+        </div>
+        <div class="file-list" id="e-file-list"></div>
+      </div>
+      <div class="nav-btns">
+        <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+        <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="exp-step3">
+      <div class="card">
+        <p class="card-title">生成オプション</p>
+        <div class="row2">
+          <div><label>文体のスタイル</label><select id="e-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
+          <div><label>AI検知回避の強度</label><select id="e-humanize"><option value="標準">標準（自然な文章）</option><option value="強め">強め（より人間らしい表現）</option><option value="最強">最強（独自表現を最大化）</option></select></div>
+        </div>
+      </div>
+      <button class="btn-primary" id="e-genBtn" onclick="generateReport('experiment')">✦ レポートを生成する</button>
+      <div id="e-loading" class="hidden" style="margin-top:1rem">
+        <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="e-loadingMsg">AIがレポートを作成しています...</span></div>
+      </div>
+      <div id="e-resultArea" class="hidden" style="margin-top:1.5rem">
+        <div class="card">
+          <div class="result-header"><p class="card-title">生成されたレポート</p><span class="tag exp">実験レポート</span></div>
+          <div class="result-box" id="e-resultText"></div>
+          <div class="result-actions">
+            <button class="btn-secondary" onclick="copyResult('e')">コピー</button>
+            <span id="e-copyOk" class="copy-ok hidden">✓ コピーしました</span>
+            <button class="btn-secondary" onclick="openPreview('e')">プレビュー</button>
+            <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px"><button class="btn-secondary" onclick="goStep(2)">← 戻る</button></div>
+    </div>
+  </div>
 </main>
+
+<!-- プレビューモーダル -->
+<div class="preview-overlay hidden" id="previewOverlay" onclick="if(event.target===this)closePreview()">
+  <div class="preview-modal">
+    <div class="preview-header">
+      <span class="preview-title">レポートプレビュー</span>
+      <button class="preview-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
 
 <footer class="footer">AIが生成したレポートは必ず自分で内容を確認・修正してご使用ください。</footer>
 
 <script>
-let mode = 'lecture', step = 1;
+let mode = 'lecture';
+let currentStep = 1;
 let uploadedFiles = [];
 let saveTimer = null;
-
-// ── 自動保存 ──────────────────────────
-function saveData() {
-  const data = {};
-  ['dept','ltype','theme','length','grade','memo','reference',
-   'expTitle','expLength','expGrade','expPurpose','expEquip',
-   'expMethod','expResult','expDiscussion','style','humanize'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) data[id] = el.value;
-  });
-  data.mode = mode;
-  data.step = step;
-  localStorage.setItem('reportAppData', JSON.stringify(data));
-  const ind = document.getElementById('saveIndicator');
-  ind.style.display = 'flex';
-  setTimeout(() => { ind.style.display = 'none'; }, 2000);
-}
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem('reportAppData');
-    if (!raw) return {};
-    return JSON.parse(raw);
-  } catch { return {}; }
-}
-
-function applyData(data) {
-  Object.keys(data).forEach(id => {
-    if (id === 'mode' || id === 'step') return;
-    const el = document.getElementById(id);
-    if (el) el.value = data[id];
-  });
-}
+const SAVE_KEY = 'reportApp_v3';
 
 function scheduleSave() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveData, 800);
+  saveTimer = setTimeout(doSave, 600);
 }
 
-function clearSavedData() {
-  if (confirm('保存されている入力内容をすべて消去しますか？')) {
-    localStorage.removeItem('reportAppData');
-    uploadedFiles = [];
-    location.reload();
-  }
+function doSave() {
+  const ids = ['l-dept','l-ltype','l-theme','l-length','l-grade','l-memo','l-reference',
+               'l-style','l-humanize','e-title','e-length','e-grade','e-purpose',
+               'e-equip','e-method','e-result','e-discussion','e-style','e-humanize'];
+  const data = { mode };
+  ids.forEach(id => { const el = document.getElementById(id); if (el) data[id] = el.value; });
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  const badge = document.getElementById('saveBadge');
+  badge.style.display = 'block';
+  setTimeout(() => badge.style.display = 'none', 2000);
 }
 
-// ── ファイルアップロード ───────────────
-function readFileAsText(file) {
-  return new Promise((resolve, reject) => {
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (ext === 'pdf') {
-      resolve(`[PDFファイル: ${file.name}（テキスト抽出はブラウザ上では制限があります。内容をコピーしてメモ欄に貼り付けてください）]`);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result);
-    reader.onerror = () => reject(new Error('読み込み失敗'));
-    reader.readAsText(file, 'UTF-8');
-  });
+function applySaved() {
+  try {
+    const data = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+    Object.keys(data).forEach(id => {
+      if (id === 'mode') return;
+      const el = document.getElementById(id);
+      if (el) el.value = data[id];
+    });
+    if (data.mode) setMode(data.mode);
+  } catch(e) {}
+}
+
+function resetAll() {
+  if (!confirm('入力内容をすべてリセットしますか？')) return;
+  localStorage.removeItem(SAVE_KEY);
+  uploadedFiles = [];
+  renderFileLists();
+  document.querySelectorAll('input[type=text], textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[type=number]').forEach(el => el.value = 1200);
+  document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
 }
 
 async function handleFiles(files) {
   for (const file of files) {
     if (uploadedFiles.find(f => f.name === file.name)) continue;
-    if (file.size > 5 * 1024 * 1024) { alert(`${file.name} は5MBを超えています。`); continue; }
-    try {
-      const text = await readFileAsText(file);
-      uploadedFiles.push({ name: file.name, size: file.size, text });
-    } catch { alert(`${file.name} の読み込みに失敗しました。`); }
+    if (file.size > 5 * 1024 * 1024) { alert(file.name + ' は5MBを超えています。'); continue; }
+    const ext = file.name.split('.').pop().toLowerCase();
+    let text;
+    if (ext === 'pdf') {
+      text = `[PDFファイル: ${file.name}（内容をコピーしてメモ欄に貼り付けてください）]`;
+    } else {
+      text = await new Promise((res) => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.readAsText(file, 'UTF-8');
+      });
+    }
+    uploadedFiles.push({ name: file.name, size: file.size, text });
   }
-  renderFileList();
-  scheduleSave();
+  renderFileLists();
 }
 
 function removeFile(name) {
   uploadedFiles = uploadedFiles.filter(f => f.name !== name);
-  renderFileList();
+  renderFileLists();
 }
 
-function renderFileList() {
-  const el = document.getElementById('fileList');
-  if (!el) return;
-  if (uploadedFiles.length === 0) { el.innerHTML = ''; return; }
-  el.innerHTML = uploadedFiles.map(f => `
-    <div class="file-item">
-      <span>📄</span>
-      <span class="file-item-name">${f.name}</span>
-      <span class="file-item-size">${(f.size/1024).toFixed(0)}KB</span>
-      <button class="file-item-remove" onclick="removeFile('${f.name}')" title="削除">✕</button>
-    </div>`).join('');
-}
-
-function fileUploadHTML(areaId, inputId) {
-  return `
-    <div class="file-upload-area" id="${areaId}"
-      ondragover="event.preventDefault();this.classList.add('dragover')"
-      ondragleave="this.classList.remove('dragover')"
-      ondrop="event.preventDefault();this.classList.remove('dragover');handleFiles(event.dataTransfer.files)">
-      <input type="file" id="${inputId}" multiple accept=".txt,.pdf,.docx,.md"
-        onchange="handleFiles(this.files)">
-      <div class="file-upload-icon">📂</div>
-      <div class="file-upload-text">ドラッグ＆ドロップ または <span onclick="document.getElementById('${inputId}').click()">ファイルを選択</span></div>
-      <div class="file-upload-text" style="margin-top:4px;font-size:11px">対応形式：txt / pdf / md（各5MBまで）</div>
-    </div>
-    <div class="file-list" id="fileList"></div>`;
-}
-
-// ── モード・ステップ ──────────────────
-function setMode(m) {
-  mode = m; step = 1;
-  document.getElementById('modeA').classList.toggle('active', m === 'lecture');
-  document.getElementById('modeB').classList.toggle('active', m === 'experiment');
-  renderApp();
-}
-
-function goStep(n) { step = n; renderApp(); }
-
-function renderApp() { renderStepNav(); renderStep(); }
-
-function renderStepNav() {
-  const steps = mode === 'lecture'
-    ? ['① 基本情報', '② メモ・資料入力', '③ 生成オプション']
-    : ['① 基本情報', '② 実験データ入力', '③ 生成オプション'];
-  document.getElementById('stepNav').innerHTML = steps
-    .map((s,i) => `<button class="step-btn${step===i+1?' active':''}" onclick="goStep(${i+1})">${s}</button>`)
-    .join('');
-}
-
-function gradeOptions() {
-  return ['学部1年生','学部2年生','学部3年生','学部4年生','修士1年生','修士2年生','博士課程']
-    .map((g,i) => `<option value="${g}"${i===2?' selected':''}>${g}</option>`).join('');
-}
-
-function charInput(id, val) {
-  return `<div class="char-wrap"><input type="number" id="${id}" value="${val}" min="100" max="20000" step="100" oninput="scheduleSave()"><span class="char-unit">字</span></div>`;
-}
-
-function addSaveListeners() {
-  setTimeout(() => {
-    document.querySelectorAll('input, select, textarea').forEach(el => {
-      el.addEventListener('input', scheduleSave);
-      el.addEventListener('change', scheduleSave);
-    });
-    const saved = loadData();
-    applyData(saved);
-    renderFileList();
-  }, 50);
-}
-
-function renderStep() {
-  const el = document.getElementById('mainContent');
-
-  if (mode === 'lecture') {
-    if (step === 1) {
-      el.innerHTML = `
-        <div class="card">
-          <p class="card-title">基本情報</p>
-          <div class="row2 field">
-            <div><label>学部・専攻の種類</label>
-              <select id="dept">
-                <option value="理系">理系（理工・医・農・情報など）</option>
-                <option value="文系">文系（法・経・文・社会など）</option>
-                <option value="その他">その他・学際系</option>
-              </select></div>
-            <div><label>レポートの種類</label>
-              <select id="ltype">
-                <option value="論述レポート">論述レポート（意見・考察）</option>
-                <option value="調査レポート">調査・文献レポート</option>
-                <option value="書評レポート">書評・要約レポート</option>
-              </select></div>
-          </div>
-          <div class="field">
-            <label>テーマ・課題タイトル</label>
-            <input type="text" id="theme" placeholder="例：地球温暖化が農業に与える影響について" oninput="scheduleSave()">
-          </div>
-          <div class="row2">
-            <div><label>文字数の目安</label>${charInput('length',1200)}</div>
-            <div><label>学年</label><select id="grade">${gradeOptions()}</select></div>
-          </div>
-        </div>
-        <div class="nav-btns">
-          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
-          <button class="btn-danger" onclick="clearSavedData()">入力をリセット</button>
-        </div>`;
-      addSaveListeners();
-
-    } else if (step === 2) {
-      el.innerHTML = `
-        <div class="card">
-          <p class="card-title">講義のレジュメ・メモ</p>
-          <label>授業のレジュメや自分のメモをそのまま貼り付けてください</label>
-          <textarea id="memo" placeholder="箇条書きでもキーワードだけでもOKです&#10;例：・温暖化で平均気温2℃上昇&#10;・収穫量最大30%減少（FAO 2022）" oninput="scheduleSave()"></textarea>
-          <p class="tip">キーワードだけでも大丈夫です</p>
-        </div>
-        <div class="card">
-          <p class="card-title">参考資料のアップロード（任意）</p>
-          <label>参考にしたいファイルをアップロードしてください</label>
-          ${fileUploadHTML('dropArea','fileInput')}
-        </div>
-        <div class="card">
-          <p class="card-title">参考にしたい文章・レポート（任意）</p>
-          <label>テキストで貼り付けることもできます</label>
-          <textarea id="reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..." oninput="scheduleSave()"></textarea>
-        </div>
-        <div class="nav-btns">
-          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
-          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
-        </div>`;
-      addSaveListeners();
-
-    } else {
-      el.innerHTML = genOptionsHTML('lecture');
-      addSaveListeners();
-    }
-
-  } else {
-    if (step === 1) {
-      el.innerHTML = `
-        <div class="card">
-          <p class="card-title">実験の基本情報</p>
-          <div class="field"><label>実験タイトル・科目名</label>
-            <input type="text" id="expTitle" placeholder="例：酢酸エチルの合成と精製" oninput="scheduleSave()"></div>
-          <div class="row2 field">
-            <div><label>文字数の目安</label>${charInput('expLength',1200)}</div>
-            <div><label>学年</label><select id="expGrade">${gradeOptions()}</select></div>
-          </div>
-          <div class="field"><label>実験の目的・仮説</label>
-            <textarea id="expPurpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。" oninput="scheduleSave()"></textarea></div>
-          <div><label>使用器具・試薬</label>
-            <textarea id="expEquip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px" oninput="scheduleSave()"></textarea></div>
-        </div>
-        <div class="nav-btns">
-          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
-          <button class="btn-danger" onclick="clearSavedData()">入力をリセット</button>
-        </div>`;
-      addSaveListeners();
-
-    } else if (step === 2) {
-      el.innerHTML = `
-        <div class="card">
-          <p class="card-title">実験手順</p>
-          <label>手順のメモや配布プリントの内容を貼り付けてください</label>
-          <textarea id="expMethod" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱" oninput="scheduleSave()"></textarea>
-        </div>
-        <div class="card">
-          <p class="card-title">実験結果・測定データ</p>
-          <label>数値・観察結果などをそのまま貼り付けてください</label>
-          <textarea id="expResult" placeholder="例：&#10;・反応前の質量：12.3g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）" oninput="scheduleSave()"></textarea>
-        </div>
-        <div class="card">
-          <p class="card-title">考察のポイント・気づき</p>
-          <label>自分の考えやメモ、誤差の原因などを書いてください</label>
-          <textarea id="expDiscussion" placeholder="例：・収率が低かった原因は分液操作での損失か&#10;・沸点が理論値と一致→純度は高い" oninput="scheduleSave()"></textarea>
-        </div>
-        <div class="card">
-          <p class="card-title">参考資料のアップロード（任意）</p>
-          <label>実験プリントや参考資料のファイルをアップロードしてください</label>
-          ${fileUploadHTML('dropArea2','fileInput2')}
-        </div>
-        <div class="nav-btns">
-          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
-          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
-        </div>`;
-      addSaveListeners();
-
-    } else {
-      el.innerHTML = genOptionsHTML('experiment');
-      addSaveListeners();
-    }
-  }
-}
-
-function genOptionsHTML(m) {
-  return `
-    <div class="card">
-      <p class="card-title">生成オプション</p>
-      <div class="row2">
-        <div><label>文体のスタイル</label>
-          <select id="style">
-            <option value="標準的な大学レポート体">標準的な大学レポート体</option>
-            <option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option>
-            <option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option>
-          </select></div>
-        <div><label>AI検知回避の強度</label>
-          <select id="humanize">
-            <option value="標準">標準（自然な文章）</option>
-            <option value="強め">強め（より人間らしい表現）</option>
-            <option value="最強">最強（独自表現を最大化）</option>
-          </select></div>
-      </div>
-    </div>
-    <button class="btn-primary" id="genBtn" onclick="generateReport('${m}')">✦ レポートを生成する</button>
-    <div id="loadingArea" class="hidden" style="margin-top:1rem">
-      <div class="loading">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        <span id="loadingMsg">AIがレポートを作成しています...</span>
-      </div>
-    </div>
-    <div id="resultArea" class="hidden" style="margin-top:1.5rem">
-      <div class="card">
-        <div class="result-header">
-          <p class="card-title">生成されたレポート</p>
-          <span class="tag${m==='experiment'?' exp':''}">${m==='experiment'?'実験レポート':'講義レポート'}</span>
-        </div>
-        <div class="result-box" id="resultText"></div>
-        <div class="result-actions">
-          <button class="btn-secondary" onclick="copyResult()">コピー</button>
-          <span id="copyOk" class="copy-ok hidden">✓ コピーしました</span>
-          <button class="btn-secondary" onclick="generateReport('${m}')">↺ 再生成</button>
-        </div>
-      </div>
-    </div>
-    <div style="margin-top:10px">
-      <button class="btn-secondary" onclick="goStep(2)">← 戻る</button>
-    </div>`;
-}
-
-async function generateReport(m) {
-  const style = document.getElementById('style').value;
-  const humanize = document.getElementById('humanize').value;
-  const fileTexts = uploadedFiles.map(f => `【添付ファイル: ${f.name}】\n${f.text}`).join('\n\n');
-  let prompt = '';
-
-  if (m === 'lecture') {
-    const theme = document.getElementById('theme')?.value.trim() || '';
-    const memo = document.getElementById('memo')?.value.trim() || '';
-    const dept = document.getElementById('dept')?.value || '';
-    const ltype = document.getElementById('ltype')?.value || '';
-    const length = document.getElementById('length')?.value || '1200';
-    const grade = document.getElementById('grade')?.value || '';
-    const reference = document.getElementById('reference')?.value.trim() || '';
-    if (!theme) { alert('テーマを入力してください。'); goStep(1); return; }
-    if (!memo && uploadedFiles.length === 0) { alert('メモを入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
-    const refPart = reference ? `\n\n【参考文章】\n${reference}` : '';
-    const filePart = fileTexts ? `\n\n【アップロードされた参考資料】\n${fileTexts}` : '';
-    prompt = `あなたは大学生のレポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい講義レポートを作成してください。
-
-【条件】
-学部種別：${dept} / レポート種類：${ltype} / 学年：${grade} / 文字数：${length}字程度
-文体：${style} / AI検知回避レベル：${humanize}
-・「強め」→ 言い回しを個性的に、接続詞・文末表現を多様化
-・「最強」→ 非常に個性的な語彙・構成・視点を使用、AIの定型パターンを徹底的に避ける
-
-【テーマ】${theme}
-
-【講義メモ・レジュメ】
-${memo || '（メモなし）'}${refPart}${filePart}
-
-【出力ルール】
-- タイトル、序論、本論、結論の構成で書く
-- メモ・資料の内容を自分の考察として自然に組み込む
-- AIっぽい定型表現を避ける
-- 箇条書きは使わず全て文章で書く
-- 最初の行に「タイトル：〇〇」の形式でタイトルを出力する
-- 文字数は${length}字程度に近づける
-
-レポート本文のみ出力してください（説明・コメント不要）。`;
-
-  } else {
-    const expTitle = document.getElementById('expTitle')?.value.trim() || '';
-    const expPurpose = document.getElementById('expPurpose')?.value.trim() || '';
-    const expEquip = document.getElementById('expEquip')?.value.trim() || '';
-    const expMethod = document.getElementById('expMethod')?.value.trim() || '';
-    const expResult = document.getElementById('expResult')?.value.trim() || '';
-    const expDiscussion = document.getElementById('expDiscussion')?.value.trim() || '';
-    const expLength = document.getElementById('expLength')?.value || '1200';
-    const expGrade = document.getElementById('expGrade')?.value || '';
-    const filePart = fileTexts ? `\n\n【アップロードされた参考資料】\n${fileTexts}` : '';
-    if (!expTitle) { alert('実験タイトルを入力してください。'); goStep(1); return; }
-    if (!expResult && uploadedFiles.length === 0) { alert('実験結果を入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
-    prompt = `あなたは大学生の実験レポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい実験レポートを作成してください。
-
-【条件】
-学年：${expGrade} / 文字数：${expLength}字程度
-文体：${style} / AI検知回避レベル：${humanize}
-
-【実験タイトル】${expTitle}
-【実験の目的・仮説】${expPurpose||'（省略）'}
-【使用器具・試薬】${expEquip||'（省略）'}
-【実験手順メモ】${expMethod||'（省略）'}
-【実験結果・データ】${expResult||'（添付ファイル参照）'}
-【考察のポイント】${expDiscussion||'（省略）'}${filePart}
-
-【出力ルール】
-- 「目的」「実験方法」「結果」「考察」「結論」の5章構成で書く
-- 結果のデータを具体的な数値つきで文章に組み込む
-- 考察では結果の原因・誤差・理論との比較を自分の言葉で述べる
-- 箇条書きは使わず全て文章で書く
-- 最初の行に「タイトル：〇〇」の形式で出力する
-- 文字数は${expLength}字程度に近づける
-
-レポート本文のみ出力してください（説明・コメント不要）。`;
-  }
-
-  const genBtn = document.getElementById('genBtn');
-  genBtn.disabled = true;
-  document.getElementById('loadingArea').classList.remove('hidden');
-  document.getElementById('resultArea').classList.add('hidden');
-
-  const msgs = ['AIがレポートを構成しています...','文体を整えています...','AI検知を回避する表現に調整中...','最終チェックをしています...'];
-  let mi = 0;
-  const msgEl = document.getElementById('loadingMsg');
-  const t = setInterval(() => { mi=(mi+1)%msgs.length; msgEl.textContent=msgs[mi]; }, 2200);
-
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    const data = await res.json();
-    clearInterval(t);
-    document.getElementById('loadingArea').classList.add('hidden');
-    genBtn.disabled = false;
-    document.getElementById('resultText').textContent = data.error ? 'エラー：' + data.error : data.result;
-    document.getElementById('resultArea').classList.remove('hidden');
-  } catch (e) {
-    clearInterval(t);
-    document.getElementById('loadingArea').classList.add('hidden');
-    genBtn.disabled = false;
-    document.getElementById('resultText').textContent = 'エラーが発生しました。もう一度お試しください。';
-    document.getElementById('resultArea').classList.remove('hidden');
-  }
-}
-
-function copyResult() {
-  navigator.clipboard.writeText(document.getElementById('resultText').textContent).then(() => {
-    const el = document.getElementById('copyOk');
-    el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 2000);
+function renderFileLists() {
+  ['file-list','e-file-list'].forEach(listId => {
+    const el = document.getElementById(listId);
+    if (!el) return;
+    el.innerHTML = uploadedFiles.map(f => `
+      <div class="file-item">
+        <span>📄</span>
+        <span class="file-item-name">${f.name}</span>
+        <span class="file-item-size">${(f.size/1024).toFixed(0)}KB</span>
+        <button class="file-remove" onclick="removeFile('${f.name}')">✕</button>
+      </div>`).join('');
   });
 }
 
-// 起動時に保存データを復元
-const saved = loadData();
-if (saved.mode) { mode = saved.mode; }
-renderApp();
-setTimeout(() => {
-  applyData(saved);
-  renderFileList();
-}, 100);
+function setMode(m) {
+  mode = m;
+  document.getElementById('modeA').classList.toggle('active', m === 'lecture');
+  document.getElementById('modeB').classList.toggle('active', m === 'experiment');
+  document.getElementById('lec-panels').classList.toggle('hidden', m !== 'lecture');
+  document.getElementById('exp-panels').classList.toggle('hidden', m === 'lecture');
+  currentStep = 1;
+  updateStepNav();
+  updateStepView();
+  scheduleSave();
+}
+
+function goStep(n) {
+  currentStep = n;
+  updateStepNav();
+  updateStepView();
+  window.scrollTo(0, 0);
+}
+
+function updateStepNav() {
+  const steps = mode === 'lecture'
+    ? ['① 基本情報','② メモ・資料入力','③ 生成オプション']
+    : ['① 基本情報','② 実験データ入力','③ 生成オプション'];
+  document.getElementById('stepNav').innerHTML = steps
+    .map((s,i) => `<button class="step-btn${currentStep===i+1?' active':''}" onclick="goStep(${i+1})">${s}</button>`)
+    .join('');
+}
+
+function updateStepView() {
+  const prefix = mode === 'lecture' ? 'lec' : 'exp';
+  [1,2,3].forEach(n => {
+    const el = document.getElementById(`${prefix}-step${n}`);
+    if (el) el.classList.toggle('active', n === currentStep);
+  });
+}
+
+async function generateReport(m) {
+  const fileTexts = uploadedFiles.map(f => `【添付: ${f.name}】\n${f.text}`).join('\n\n');
+  let prompt = '';
+
+  if (m === 'lecture') {
+    const theme = document.getElementById('l-theme').value.trim();
+    const memo  = document.getElementById('l-memo').value.trim();
+    const dept  = document.getElementById('l-dept').value;
+    const ltype = document.getElementById('l-ltype').value;
+    const length= document.getElementById('l-length').value || '1200';
+    const grade = document.getElementById('l-grade').value;
+    const ref   = document.getElementById('l-reference').value.trim();
+    const style = document.getElementById('l-style').value;
+    const humanize = document.getElementById('l-humanize').value;
+    if (!theme) { alert('①基本情報のテーマを入力してください。'); goStep(1); return; }
+    if (!memo && uploadedFiles.length === 0) { alert('②メモを入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
+    const refPart  = ref ? `\n\n【参考文章】\n${ref}` : '';
+    const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
+    prompt = `あなたは大学生のレポート作成を支援する専門家です。以下をもとに自然で人間らしい講義レポートを作成してください。
+
+【条件】学部：${dept} / 種類：${ltype} / 学年：${grade} / 文字数：${length}字程度
+文体：${style} / AI検知回避：${humanize}
+
+【テーマ】${theme}
+【メモ・レジュメ】${memo||'（なし）'}${refPart}${filePart}
+
+【ルール】タイトル/序論/本論/結論の構成、箇条書き禁止、全て文章、最初の行に「タイトル：〇〇」、${length}字程度
+
+レポート本文のみ出力（説明不要）。`;
+    runGenerate('l', prompt);
+
+  } else {
+    const title  = document.getElementById('e-title').value.trim();
+    const result = document.getElementById('e-result').value.trim();
+    const purpose= document.getElementById('e-purpose').value.trim();
+    const equip  = document.getElementById('e-equip').value.trim();
+    const method = document.getElementById('e-method').value.trim();
+    const disc   = document.getElementById('e-discussion').value.trim();
+    const length = document.getElementById('e-length').value || '1200';
+    const grade  = document.getElementById('e-grade').value;
+    const style  = document.getElementById('e-style').value;
+    const humanize = document.getElementById('e-humanize').value;
+    const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
+    if (!title) { alert('①基本情報の実験タイトルを入力してください。'); goStep(1); return; }
+    if (!result && uploadedFiles.length === 0) { alert('②実験結果を入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
+    prompt = `あなたは大学生の実験レポート作成支援の専門家です。以下をもとに自然で人間らしい実験レポートを作成してください。
+
+【条件】学年：${grade} / 文字数：${length}字程度 / 文体：${style} / AI検知回避：${humanize}
+
+【タイトル】${title}
+【目的】${purpose||'省略'}【器具・試薬】${equip||'省略'}
+【手順】${method||'省略'}【結果・データ】${result||'添付参照'}
+【考察メモ】${disc||'省略'}${filePart}
+
+【ルール】目的/実験方法/結果/考察/結論の5章構成、数値を文章に組み込む、箇条書き禁止、最初の行に「タイトル：〇〇」、${length}字程度
+
+レポート本文のみ出力（説明不要）。`;
+    runGenerate('e', prompt);
+  }
+}
+
+async function runGenerate(prefix, prompt) {
+  const btn = document.getElementById(prefix+'-genBtn');
+  const loading = document.getElementById(prefix+'-loading');
+  const resultArea = document.getElementById(prefix+'-resultArea');
+  const resultText = document.getElementById(prefix+'-resultText');
+  const msgEl = document.getElementById(prefix+'-loadingMsg');
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  resultArea.classList.add('hidden');
+  const msgs = ['AIがレポートを構成しています...','文体を整えています...','AI検知回避の表現に調整中...','最終チェックをしています...'];
+  let mi = 0;
+  const t = setInterval(() => { mi=(mi+1)%msgs.length; msgEl.textContent=msgs[mi]; }, 2200);
+  try {
+    const res = await fetch('/api/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
+    const data = await res.json();
+    clearInterval(t);
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    resultText.textContent = data.error ? 'エラー：'+data.error : data.result;
+    resultArea.classList.remove('hidden');
+  } catch(e) {
+    clearInterval(t);
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    resultText.textContent = 'エラーが発生しました。もう一度お試しください。';
+    resultArea.classList.remove('hidden');
+  }
+}
+
+function copyResult(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const ok = document.getElementById(prefix+'-copyOk');
+    ok.classList.remove('hidden');
+    setTimeout(() => ok.classList.add('hidden'), 2000);
+  });
+}
+
+function openPreview(prefix) {
+  document.getElementById('previewBody').textContent = document.getElementById(prefix+'-resultText').textContent;
+  document.getElementById('previewOverlay').classList.remove('hidden');
+}
+
+function closePreview() {
+  document.getElementById('previewOverlay').classList.add('hidden');
+}
+
+document.addEventListener('input', e => { if (e.target.matches('input,select,textarea')) scheduleSave(); });
+document.addEventListener('change', e => { if (e.target.matches('select')) scheduleSave(); });
+
+updateStepNav();
+updateStepView();
+applySaved();
 </script>
 </body>
 </html>
