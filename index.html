@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIレポート作成アシスタント</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --border: #e2e0da;
+    --border-strong: #c8c5be;
+    --text: #1a1a18;
+    --text-muted: #6b6860;
+    --text-hint: #a09e9a;
+    --accent: #E8641A;
+    --accent-hover: #cf5815;
+    --accent-light: #fff0e6;
+    --accent-text: #993C1D;
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --success-bg: #eaf3de;
+    --success-text: #27500a;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; flex-shrink: 0;
+  }
+
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .container { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+  .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+
+  .mode-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .mode-card:hover { border-color: var(--border-strong); }
+  .mode-card.active { border: 2px solid var(--accent); }
+
+  .mode-icon { font-size: 20px; margin-bottom: 6px; }
+  .mode-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .mode-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  .step-nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+  .step-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+
+  .step-btn:hover { background: var(--bg); }
+  .step-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+
+  label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+
+  input[type=text], input[type=number], select, textarea {
+    width: 100%;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: 9px 12px;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(232,100,26,0.12);
+  }
+
+  textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+
+  .char-wrap { position: relative; }
+  .char-unit {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px; color: var(--text-muted);
+    pointer-events: none;
+  }
+  .char-wrap input { padding-right: 36px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 14px; }
+  .tip { font-size: 12px; color: var(--text-hint); margin-top: 5px; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    font-family: var(--font);
+    margin-top: 4px;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-secondary {
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.15s;
+    font-family: var(--font);
+  }
+
+  .btn-secondary:hover { background: var(--bg); }
+
+  .nav-btns { display: flex; gap: 8px; margin-top: 4px; }
+  .nav-btns .btn-primary { max-width: 180px; }
+
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; padding: 1rem 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.25} 40%{opacity:1} }
+
+  .result-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 120px;
+  }
+
+  .result-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    background: var(--info-bg);
+    color: var(--info-text);
+    font-weight: 500;
+  }
+
+  .tag.exp { background: var(--success-bg); color: var(--success-text); }
+  .copy-ok { font-size: 12px; color: var(--success-text); font-weight: 500; }
+  .hidden { display: none !important; }
+  .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .result-header .card-title { margin-bottom: 0; }
+
+  .footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 12px;
+    color: var(--text-hint);
+  }
+
+  @media (max-width: 560px) {
+    .row2 { grid-template-columns: 1fr; }
+    .mode-switch { grid-template-columns: 1fr; }
+    .container { padding: 1.25rem 0.75rem 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">✏</div>
+  <div>
+    <div class="header-title">AIレポート作成アシスタント</div>
+    <div class="header-sub">参考資料とメモを入れるだけで自然なレポートを生成</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="mode-switch">
+    <div class="mode-card active" id="modeA" onclick="setMode('lecture')">
+      <div class="mode-icon">📝</div>
+      <div class="mode-title">講義レポートモード</div>
+      <div class="mode-desc">論述・調査・書評など。文系・理系どちらにも対応</div>
+    </div>
+    <div class="mode-card" id="modeB" onclick="setMode('experiment')">
+      <div class="mode-icon">🔬</div>
+      <div class="mode-title">実験レポートモード</div>
+      <div class="mode-desc">目的・方法・結果・考察の構成に特化</div>
+    </div>
+  </div>
+
+  <div id="stepNav" class="step-nav"></div>
+  <div id="mainContent"></div>
+
+</main>
+
+<footer class="footer">
+  AIが生成したレポートは必ず自分で内容を確認・修正してご使用ください。
+</footer>
+
+<script>
+let mode = 'lecture', step = 1;
+
+function setMode(m) {
+  mode = m; step = 1;
+  document.getElementById('modeA').classList.toggle('active', m === 'lecture');
+  document.getElementById('modeB').classList.toggle('active', m === 'experiment');
+  renderApp();
+}
+
+function goStep(n) { step = n; renderApp(); }
+function renderApp() { renderStepNav(); renderStep(); }
+
+function renderStepNav() {
+  const steps = mode === 'lecture'
+    ? ['① 基本情報', '② メモ・参考入力', '③ 生成オプション']
+    : ['① 基本情報', '② 実験データ入力', '③ 生成オプション'];
+  document.getElementById('stepNav').innerHTML = steps
+    .map((s, i) => `<button class="step-btn${step === i+1 ? ' active' : ''}" onclick="goStep(${i+1})">${s}</button>`)
+    .join('');
+}
+
+function gradeOptions() {
+  return ['学部1年生','学部2年生','学部3年生','学部4年生','修士1年生','修士2年生','博士課程']
+    .map((g, i) => `<option value="${g}"${i === 2 ? ' selected' : ''}>${g}</option>`).join('');
+}
+
+function charInput(id, val) {
+  return `<div class="char-wrap"><input type="number" id="${id}" value="${val}" min="100" max="20000" step="100"><span class="char-unit">字</span></div>`;
+}
+
+function renderStep() {
+  const el = document.getElementById('mainContent');
+
+  if (mode === 'lecture') {
+    if (step === 1) {
+      el.innerHTML = `
+        <div class="card">
+          <p class="card-title">基本情報</p>
+          <div class="row2 field">
+            <div><label>学部・専攻の種類</label>
+              <select id="dept">
+                <option value="理系">理系（理工・医・農・情報など）</option>
+                <option value="文系">文系（法・経・文・社会など）</option>
+                <option value="その他">その他・学際系</option>
+              </select></div>
+            <div><label>レポートの種類</label>
+              <select id="ltype">
+                <option value="論述レポート">論述レポート（意見・考察）</option>
+                <option value="調査レポート">調査・文献レポート</option>
+                <option value="書評レポート">書評・要約レポート</option>
+              </select></div>
+          </div>
+          <div class="field"><label>テーマ・課題タイトル</label>
+            <input type="text" id="theme" placeholder="例：地球温暖化が農業に与える影響について"></div>
+          <div class="row2">
+            <div><label>文字数の目安</label>${charInput('length', 1200)}</div>
+            <div><label>学年</label><select id="grade">${gradeOptions()}</select></div>
+          </div>
+        </div>
+        <div class="nav-btns"><button class="btn-primary" onclick="goStep(2)">次へ →</button></div>`;
+    } else if (step === 2) {
+      el.innerHTML = `
+        <div class="card">
+          <p class="card-title">講義のレジュメ・メモ</p>
+          <label>授業のレジュメや自分のメモをそのまま貼り付けてください</label>
+          <textarea id="memo" placeholder="箇条書きでもキーワードだけでもOKです&#10;例：・温暖化で平均気温2℃上昇&#10;・収穫量最大30%減少（FAO 2022）&#10;・適応策：品種改良、灌漑技術の改善"></textarea>
+          <p class="tip">キーワードだけでも大丈夫です</p>
+        </div>
+        <div class="card">
+          <p class="card-title">参考にしたい文章・レポート（任意）</p>
+          <label>構成・内容の参考にします（コピーではありません）</label>
+          <textarea id="reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..."></textarea>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+        </div>`;
+    } else {
+      el.innerHTML = genOptionsHTML('lecture');
+    }
+  } else {
+    if (step === 1) {
+      el.innerHTML = `
+        <div class="card">
+          <p class="card-title">実験の基本情報</p>
+          <div class="field"><label>実験タイトル・科目名</label>
+            <input type="text" id="expTitle" placeholder="例：酢酸エチルの合成と精製"></div>
+          <div class="row2 field">
+            <div><label>文字数の目安</label>${charInput('expLength', 1200)}</div>
+            <div><label>学年</label><select id="expGrade">${gradeOptions()}</select></div>
+          </div>
+          <div class="field"><label>実験の目的・仮説</label>
+            <textarea id="expPurpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。"></textarea></div>
+          <div><label>使用器具・試薬</label>
+            <textarea id="expEquip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px"></textarea></div>
+        </div>
+        <div class="nav-btns"><button class="btn-primary" onclick="goStep(2)">次へ →</button></div>`;
+    } else if (step === 2) {
+      el.innerHTML = `
+        <div class="card">
+          <p class="card-title">実験手順</p>
+          <label>手順のメモや配布プリントの内容を貼り付けてください（箇条書きでOK）</label>
+          <textarea id="expMethod" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱&#10;3. 冷却後、分液漏斗で水層・有機層を分離"></textarea>
+        </div>
+        <div class="card">
+          <p class="card-title">実験結果・測定データ</p>
+          <label>数値・観察結果などをそのまま貼り付けてください</label>
+          <textarea id="expResult" placeholder="例：&#10;・反応前の質量：12.3g&#10;・反応後の質量：9.8g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）"></textarea>
+        </div>
+        <div class="card">
+          <p class="card-title">考察のポイント・気づき</p>
+          <label>自分の考えやメモ、誤差の原因などを書いてください</label>
+          <textarea id="expDiscussion" placeholder="例：・収率が低かった原因は分液操作での損失か&#10;・沸点が理論値と一致→純度は高い"></textarea>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+        </div>`;
+    } else {
+      el.innerHTML = genOptionsHTML('experiment');
+    }
+  }
+}
+
+function genOptionsHTML(m) {
+  return `
+    <div class="card">
+      <p class="card-title">生成オプション</p>
+      <div class="row2">
+        <div><label>文体のスタイル</label>
+          <select id="style">
+            <option value="標準的な大学レポート体">標準的な大学レポート体</option>
+            <option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option>
+            <option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option>
+          </select></div>
+        <div><label>AI検知回避の強度</label>
+          <select id="humanize">
+            <option value="標準">標準（自然な文章）</option>
+            <option value="強め">強め（より人間らしい表現）</option>
+            <option value="最強">最強（独自表現を最大化）</option>
+          </select></div>
+      </div>
+    </div>
+    <button class="btn-primary" id="genBtn" onclick="generateReport('${m}')">✦ レポートを生成する</button>
+    <div id="loadingArea" class="hidden" style="margin-top:1rem">
+      <div class="loading">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span id="loadingMsg">AIがレポートを作成しています...</span>
+      </div>
+    </div>
+    <div id="resultArea" class="hidden" style="margin-top:1.5rem">
+      <div class="card">
+        <div class="result-header">
+          <p class="card-title">生成されたレポート</p>
+          <span class="tag${m === 'experiment' ? ' exp' : ''}">${m === 'experiment' ? '実験レポート' : '講義レポート'}</span>
+        </div>
+        <div class="result-box" id="resultText"></div>
+        <div class="result-actions">
+          <button class="btn-secondary" onclick="copyResult()">コピー</button>
+          <span id="copyOk" class="copy-ok hidden">✓ コピーしました</span>
+          <button class="btn-secondary" onclick="generateReport('${m}')">↺ 再生成</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn-secondary" onclick="goStep(2)">← 戻る</button>
+    </div>`;
+}
+
+async function generateReport(m) {
+  const style = document.getElementById('style').value;
+  const humanize = document.getElementById('humanize').value;
+  let prompt = '';
+
+  if (m === 'lecture') {
+    const theme = document.getElementById('theme')?.value.trim() || '';
+    const memo = document.getElementById('memo')?.value.trim() || '';
+    const dept = document.getElementById('dept')?.value || '';
+    const ltype = document.getElementById('ltype')?.value || '';
+    const length = document.getElementById('length')?.value || '1200';
+    const grade = document.getElementById('grade')?.value || '';
+    const reference = document.getElementById('reference')?.value.trim() || '';
+    if (!theme) { alert('テーマを入力してください。'); goStep(1); return; }
+    if (!memo) { alert('メモを入力してください。'); goStep(2); return; }
+    const refPart = reference ? `\n\n【参考文章・構成メモ】\n${reference}` : '';
+    prompt = `あなたは大学生のレポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい講義レポートを作成してください。
+
+【条件】
+学部種別：${dept} / レポート種類：${ltype} / 学年：${grade} / 文字数：${length}字程度
+文体：${style} / AI検知回避レベル：${humanize}
+・「強め」→ 言い回しを個性的に、接続詞・文末表現を多様化
+・「最強」→ 非常に個性的な語彙・構成・視点を使用、AIの定型パターンを徹底的に避ける
+
+【テーマ】${theme}
+
+【講義メモ・レジュメ】
+${memo}${refPart}
+
+【出力ルール】
+- タイトル、序論、本論、結論の構成で書く
+- メモの内容を自分の考察として自然に組み込む
+- AIっぽい定型表現を避ける
+- 箇条書きは使わず全て文章で書く
+- 最初の行に「タイトル：〇〇」の形式でタイトルを出力する
+- 文字数は${length}字程度に近づける
+
+レポート本文のみ出力してください（説明・コメント不要）。`;
+  } else {
+    const expTitle = document.getElementById('expTitle')?.value.trim() || '';
+    const expPurpose = document.getElementById('expPurpose')?.value.trim() || '';
+    const expEquip = document.getElementById('expEquip')?.value.trim() || '';
+    const expMethod = document.getElementById('expMethod')?.value.trim() || '';
+    const expResult = document.getElementById('expResult')?.value.trim() || '';
+    const expDiscussion = document.getElementById('expDiscussion')?.value.trim() || '';
+    const expLength = document.getElementById('expLength')?.value || '1200';
+    const expGrade = document.getElementById('expGrade')?.value || '';
+    if (!expTitle) { alert('実験タイトルを入力してください。'); goStep(1); return; }
+    if (!expResult) { alert('実験結果を入力してください。'); goStep(2); return; }
+    prompt = `あなたは大学生の実験レポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい実験レポートを作成してください。
+
+【条件】
+学年：${expGrade} / 文字数：${expLength}字程度
+文体：${style} / AI検知回避レベル：${humanize}
+
+【実験タイトル】${expTitle}
+【実験の目的・仮説】${expPurpose || '（省略）'}
+【使用器具・試薬】${expEquip || '（省略）'}
+【実験手順メモ】${expMethod || '（省略）'}
+【実験結果・データ】${expResult}
+【考察のポイント】${expDiscussion || '（省略）'}
+
+【出力ルール】
+- 「目的」「実験方法」「結果」「考察」「結論」の5章構成で書く
+- 結果のデータを具体的な数値つきで文章に組み込む
+- 考察では結果の原因・誤差・理論との比較を自分の言葉で述べる
+- 箇条書きは使わず全て文章で書く
+- 最初の行に「タイトル：〇〇」の形式で出力する
+- 文字数は${expLength}字程度に近づける
+
+レポート本文のみ出力してください（説明・コメント不要）。`;
+  }
+
+  const genBtn = document.getElementById('genBtn');
+  genBtn.disabled = true;
+  document.getElementById('loadingArea').classList.remove('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+
+  const msgs = ['AIがレポートを構成しています...','文体を整えています...','AI検知を回避する表現に調整中...','最終チェックをしています...'];
+  let mi = 0;
+  const msgEl = document.getElementById('loadingMsg');
+  const t = setInterval(() => { mi = (mi+1) % msgs.length; msgEl.textContent = msgs[mi]; }, 2200);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    clearInterval(t);
+    document.getElementById('loadingArea').classList.add('hidden');
+    genBtn.disabled = false;
+    document.getElementById('resultText').textContent = data.error ? 'エラー：' + data.error : data.result;
+    document.getElementById('resultArea').classList.remove('hidden');
+  } catch (e) {
+    clearInterval(t);
+    document.getElementById('loadingArea').classList.add('hidden');
+    genBtn.disabled = false;
+    document.getElementById('resultText').textContent = 'エラーが発生しました。もう一度お試しください。';
+    document.getElementById('resultArea').classList.remove('hidden');
+  }
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(document.getElementById('resultText').textContent).then(() => {
+    const el = document.getElementById('copyOk');
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 2000);
+  });
+}
+
+renderApp();
+</script>
+</body>
+</html>
