@@ -17,167 +17,90 @@
     --text-hint: #a09e9a;
     --accent: #E8641A;
     --accent-hover: #cf5815;
-    --accent-light: #fff0e6;
-    --accent-text: #993C1D;
-    --info-bg: #e6f1fb;
-    --info-text: #0c447c;
-    --success-bg: #eaf3de;
-    --success-text: #27500a;
     --radius-md: 8px;
     --radius-lg: 12px;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
 
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.6;
-  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
 
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.5rem;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  .logo {
-    width: 32px; height: 32px;
-    background: var(--accent);
-    border-radius: var(--radius-md);
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 16px; flex-shrink: 0;
-  }
-
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .logo { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; }
   .header-title { font-size: 16px; font-weight: 600; }
   .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .save-indicator { margin-left: auto; font-size: 12px; color: var(--text-hint); display: flex; align-items: center; gap: 5px; }
+  .save-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; }
 
   .container { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
 
   .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
-
-  .mode-card {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.1rem 1.25rem;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-
+  .mode-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; cursor: pointer; transition: border-color 0.15s; }
   .mode-card:hover { border-color: var(--border-strong); }
   .mode-card.active { border: 2px solid var(--accent); }
-
   .mode-icon { font-size: 20px; margin-bottom: 6px; }
   .mode-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
   .mode-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
   .step-nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-
-  .step-btn {
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface);
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: all 0.15s;
-    font-family: var(--font);
-  }
-
+  .step-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; font-family: var(--font); }
   .step-btn:hover { background: var(--bg); }
   .step-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-  }
-
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
   .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
 
   label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
 
   input[type=text], input[type=number], select, textarea {
-    width: 100%;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    padding: 9px 12px;
-    font-size: 14px;
-    background: var(--surface);
-    color: var(--text);
-    font-family: var(--font);
-    transition: border-color 0.15s;
-    outline: none;
+    width: 100%; border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+    padding: 9px 12px; font-size: 14px; background: var(--surface); color: var(--text);
+    font-family: var(--font); transition: border-color 0.15s; outline: none;
   }
-
   input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(232,100,26,0.12);
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,100,26,0.12);
   }
-
   textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
   input[type=number] { -moz-appearance: textfield; }
   input[type=number]::-webkit-inner-spin-button { opacity: 1; }
 
   .char-wrap { position: relative; }
-  .char-unit {
-    position: absolute; right: 12px; top: 50%;
-    transform: translateY(-50%);
-    font-size: 13px; color: var(--text-muted);
-    pointer-events: none;
-  }
+  .char-unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none; }
   .char-wrap input { padding-right: 36px; }
 
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .field { margin-bottom: 14px; }
   .tip { font-size: 12px; color: var(--text-hint); margin-top: 5px; }
 
-  .btn-primary {
-    width: 100%;
-    padding: 12px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-    font-family: var(--font);
-    margin-top: 4px;
+  /* File upload */
+  .file-upload-area {
+    border: 2px dashed var(--border-strong); border-radius: var(--radius-md);
+    padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.15s;
+    background: var(--bg); margin-top: 8px;
   }
+  .file-upload-area:hover, .file-upload-area.dragover { border-color: var(--accent); background: #fff8f5; }
+  .file-upload-area input[type=file] { display: none; }
+  .file-upload-icon { font-size: 24px; margin-bottom: 6px; }
+  .file-upload-text { font-size: 13px; color: var(--text-muted); }
+  .file-upload-text span { color: var(--accent); font-weight: 500; cursor: pointer; }
+  .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 10px; font-size: 13px; }
+  .file-item-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { font-size: 11px; color: var(--text-hint); flex-shrink: 0; }
+  .file-item-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+  .file-item-remove:hover { color: #e24b4a; }
 
+  .btn-primary { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s, opacity 0.15s; font-family: var(--font); margin-top: 4px; }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  .btn-secondary {
-    padding: 8px 16px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-strong);
-    background: var(--surface);
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text);
-    transition: background 0.15s;
-    font-family: var(--font);
-  }
-
+  .btn-secondary { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; font-family: var(--font); }
   .btn-secondary:hover { background: var(--bg); }
 
-  .nav-btns { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-danger { padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid #f09595; background: #fcebeb; font-size: 12px; cursor: pointer; color: #791f1f; transition: background 0.15s; font-family: var(--font); }
+  .btn-danger:hover { background: #f7c1c1; }
+
+  .nav-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
   .nav-btns .btn-primary { max-width: 180px; }
 
   .loading { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; padding: 1rem 0; }
@@ -186,42 +109,17 @@
   .dot:nth-child(3) { animation-delay: 0.4s; }
   @keyframes pulse { 0%,80%,100%{opacity:0.25} 40%{opacity:1} }
 
-  .result-box {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 1.1rem 1.25rem;
-    font-size: 14px;
-    line-height: 1.85;
-    color: var(--text);
-    white-space: pre-wrap;
-    min-height: 120px;
-  }
-
+  .result-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; min-height: 120px; }
   .result-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
 
-  .tag {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    background: var(--info-bg);
-    color: var(--info-text);
-    font-weight: 500;
-  }
-
-  .tag.exp { background: var(--success-bg); color: var(--success-text); }
-  .copy-ok { font-size: 12px; color: var(--success-text); font-weight: 500; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: #e6f1fb; color: #0c447c; font-weight: 500; }
+  .tag.exp { background: #eaf3de; color: #27500a; }
+  .copy-ok { font-size: 12px; color: #27500a; font-weight: 500; }
   .hidden { display: none !important; }
   .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .result-header .card-title { margin-bottom: 0; }
 
-  .footer {
-    text-align: center;
-    padding: 2rem 1rem;
-    font-size: 12px;
-    color: var(--text-hint);
-  }
+  .footer { text-align: center; padding: 2rem 1rem; font-size: 12px; color: var(--text-hint); }
 
   @media (max-width: 560px) {
     .row2 { grid-template-columns: 1fr; }
@@ -238,10 +136,13 @@
     <div class="header-title">AIレポート作成アシスタント</div>
     <div class="header-sub">参考資料とメモを入れるだけで自然なレポートを生成</div>
   </div>
+  <div class="save-indicator" id="saveIndicator" style="display:none">
+    <div class="save-dot"></div>
+    <span>自動保存済み</span>
+  </div>
 </header>
 
 <main class="container">
-
   <div class="mode-switch">
     <div class="mode-card active" id="modeA" onclick="setMode('lecture')">
       <div class="mode-icon">📝</div>
@@ -254,19 +155,125 @@
       <div class="mode-desc">目的・方法・結果・考察の構成に特化</div>
     </div>
   </div>
-
   <div id="stepNav" class="step-nav"></div>
   <div id="mainContent"></div>
-
 </main>
 
-<footer class="footer">
-  AIが生成したレポートは必ず自分で内容を確認・修正してご使用ください。
-</footer>
+<footer class="footer">AIが生成したレポートは必ず自分で内容を確認・修正してご使用ください。</footer>
 
 <script>
 let mode = 'lecture', step = 1;
+let uploadedFiles = [];
+let saveTimer = null;
 
+// ── 自動保存 ──────────────────────────
+function saveData() {
+  const data = {};
+  ['dept','ltype','theme','length','grade','memo','reference',
+   'expTitle','expLength','expGrade','expPurpose','expEquip',
+   'expMethod','expResult','expDiscussion','style','humanize'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  data.mode = mode;
+  data.step = step;
+  localStorage.setItem('reportAppData', JSON.stringify(data));
+  const ind = document.getElementById('saveIndicator');
+  ind.style.display = 'flex';
+  setTimeout(() => { ind.style.display = 'none'; }, 2000);
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('reportAppData');
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch { return {}; }
+}
+
+function applyData(data) {
+  Object.keys(data).forEach(id => {
+    if (id === 'mode' || id === 'step') return;
+    const el = document.getElementById(id);
+    if (el) el.value = data[id];
+  });
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveData, 800);
+}
+
+function clearSavedData() {
+  if (confirm('保存されている入力内容をすべて消去しますか？')) {
+    localStorage.removeItem('reportAppData');
+    uploadedFiles = [];
+    location.reload();
+  }
+}
+
+// ── ファイルアップロード ───────────────
+function readFileAsText(file) {
+  return new Promise((resolve, reject) => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+      resolve(`[PDFファイル: ${file.name}（テキスト抽出はブラウザ上では制限があります。内容をコピーしてメモ欄に貼り付けてください）]`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('読み込み失敗'));
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+async function handleFiles(files) {
+  for (const file of files) {
+    if (uploadedFiles.find(f => f.name === file.name)) continue;
+    if (file.size > 5 * 1024 * 1024) { alert(`${file.name} は5MBを超えています。`); continue; }
+    try {
+      const text = await readFileAsText(file);
+      uploadedFiles.push({ name: file.name, size: file.size, text });
+    } catch { alert(`${file.name} の読み込みに失敗しました。`); }
+  }
+  renderFileList();
+  scheduleSave();
+}
+
+function removeFile(name) {
+  uploadedFiles = uploadedFiles.filter(f => f.name !== name);
+  renderFileList();
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  if (!el) return;
+  if (uploadedFiles.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = uploadedFiles.map(f => `
+    <div class="file-item">
+      <span>📄</span>
+      <span class="file-item-name">${f.name}</span>
+      <span class="file-item-size">${(f.size/1024).toFixed(0)}KB</span>
+      <button class="file-item-remove" onclick="removeFile('${f.name}')" title="削除">✕</button>
+    </div>`).join('');
+}
+
+function fileUploadHTML(areaId, inputId) {
+  return `
+    <div class="file-upload-area" id="${areaId}"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="event.preventDefault();this.classList.remove('dragover');handleFiles(event.dataTransfer.files)">
+      <input type="file" id="${inputId}" multiple accept=".txt,.pdf,.docx,.md"
+        onchange="handleFiles(this.files)">
+      <div class="file-upload-icon">📂</div>
+      <div class="file-upload-text">ドラッグ＆ドロップ または <span onclick="document.getElementById('${inputId}').click()">ファイルを選択</span></div>
+      <div class="file-upload-text" style="margin-top:4px;font-size:11px">対応形式：txt / pdf / md（各5MBまで）</div>
+    </div>
+    <div class="file-list" id="fileList"></div>`;
+}
+
+// ── モード・ステップ ──────────────────
 function setMode(m) {
   mode = m; step = 1;
   document.getElementById('modeA').classList.toggle('active', m === 'lecture');
@@ -275,24 +282,37 @@ function setMode(m) {
 }
 
 function goStep(n) { step = n; renderApp(); }
+
 function renderApp() { renderStepNav(); renderStep(); }
 
 function renderStepNav() {
   const steps = mode === 'lecture'
-    ? ['① 基本情報', '② メモ・参考入力', '③ 生成オプション']
+    ? ['① 基本情報', '② メモ・資料入力', '③ 生成オプション']
     : ['① 基本情報', '② 実験データ入力', '③ 生成オプション'];
   document.getElementById('stepNav').innerHTML = steps
-    .map((s, i) => `<button class="step-btn${step === i+1 ? ' active' : ''}" onclick="goStep(${i+1})">${s}</button>`)
+    .map((s,i) => `<button class="step-btn${step===i+1?' active':''}" onclick="goStep(${i+1})">${s}</button>`)
     .join('');
 }
 
 function gradeOptions() {
   return ['学部1年生','学部2年生','学部3年生','学部4年生','修士1年生','修士2年生','博士課程']
-    .map((g, i) => `<option value="${g}"${i === 2 ? ' selected' : ''}>${g}</option>`).join('');
+    .map((g,i) => `<option value="${g}"${i===2?' selected':''}>${g}</option>`).join('');
 }
 
 function charInput(id, val) {
-  return `<div class="char-wrap"><input type="number" id="${id}" value="${val}" min="100" max="20000" step="100"><span class="char-unit">字</span></div>`;
+  return `<div class="char-wrap"><input type="number" id="${id}" value="${val}" min="100" max="20000" step="100" oninput="scheduleSave()"><span class="char-unit">字</span></div>`;
+}
+
+function addSaveListeners() {
+  setTimeout(() => {
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('input', scheduleSave);
+      el.addEventListener('change', scheduleSave);
+    });
+    const saved = loadData();
+    applyData(saved);
+    renderFileList();
+  }, 50);
 }
 
 function renderStep() {
@@ -317,74 +337,103 @@ function renderStep() {
                 <option value="書評レポート">書評・要約レポート</option>
               </select></div>
           </div>
-          <div class="field"><label>テーマ・課題タイトル</label>
-            <input type="text" id="theme" placeholder="例：地球温暖化が農業に与える影響について"></div>
+          <div class="field">
+            <label>テーマ・課題タイトル</label>
+            <input type="text" id="theme" placeholder="例：地球温暖化が農業に与える影響について" oninput="scheduleSave()">
+          </div>
           <div class="row2">
-            <div><label>文字数の目安</label>${charInput('length', 1200)}</div>
+            <div><label>文字数の目安</label>${charInput('length',1200)}</div>
             <div><label>学年</label><select id="grade">${gradeOptions()}</select></div>
           </div>
         </div>
-        <div class="nav-btns"><button class="btn-primary" onclick="goStep(2)">次へ →</button></div>`;
+        <div class="nav-btns">
+          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+          <button class="btn-danger" onclick="clearSavedData()">入力をリセット</button>
+        </div>`;
+      addSaveListeners();
+
     } else if (step === 2) {
       el.innerHTML = `
         <div class="card">
           <p class="card-title">講義のレジュメ・メモ</p>
           <label>授業のレジュメや自分のメモをそのまま貼り付けてください</label>
-          <textarea id="memo" placeholder="箇条書きでもキーワードだけでもOKです&#10;例：・温暖化で平均気温2℃上昇&#10;・収穫量最大30%減少（FAO 2022）&#10;・適応策：品種改良、灌漑技術の改善"></textarea>
+          <textarea id="memo" placeholder="箇条書きでもキーワードだけでもOKです&#10;例：・温暖化で平均気温2℃上昇&#10;・収穫量最大30%減少（FAO 2022）" oninput="scheduleSave()"></textarea>
           <p class="tip">キーワードだけでも大丈夫です</p>
         </div>
         <div class="card">
+          <p class="card-title">参考資料のアップロード（任意）</p>
+          <label>参考にしたいファイルをアップロードしてください</label>
+          ${fileUploadHTML('dropArea','fileInput')}
+        </div>
+        <div class="card">
           <p class="card-title">参考にしたい文章・レポート（任意）</p>
-          <label>構成・内容の参考にします（コピーではありません）</label>
-          <textarea id="reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..."></textarea>
+          <label>テキストで貼り付けることもできます</label>
+          <textarea id="reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..." oninput="scheduleSave()"></textarea>
         </div>
         <div class="nav-btns">
           <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
           <button class="btn-primary" onclick="goStep(3)">次へ →</button>
         </div>`;
+      addSaveListeners();
+
     } else {
       el.innerHTML = genOptionsHTML('lecture');
+      addSaveListeners();
     }
+
   } else {
     if (step === 1) {
       el.innerHTML = `
         <div class="card">
           <p class="card-title">実験の基本情報</p>
           <div class="field"><label>実験タイトル・科目名</label>
-            <input type="text" id="expTitle" placeholder="例：酢酸エチルの合成と精製"></div>
+            <input type="text" id="expTitle" placeholder="例：酢酸エチルの合成と精製" oninput="scheduleSave()"></div>
           <div class="row2 field">
-            <div><label>文字数の目安</label>${charInput('expLength', 1200)}</div>
+            <div><label>文字数の目安</label>${charInput('expLength',1200)}</div>
             <div><label>学年</label><select id="expGrade">${gradeOptions()}</select></div>
           </div>
           <div class="field"><label>実験の目的・仮説</label>
-            <textarea id="expPurpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。"></textarea></div>
+            <textarea id="expPurpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。" oninput="scheduleSave()"></textarea></div>
           <div><label>使用器具・試薬</label>
-            <textarea id="expEquip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px"></textarea></div>
+            <textarea id="expEquip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px" oninput="scheduleSave()"></textarea></div>
         </div>
-        <div class="nav-btns"><button class="btn-primary" onclick="goStep(2)">次へ →</button></div>`;
+        <div class="nav-btns">
+          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+          <button class="btn-danger" onclick="clearSavedData()">入力をリセット</button>
+        </div>`;
+      addSaveListeners();
+
     } else if (step === 2) {
       el.innerHTML = `
         <div class="card">
           <p class="card-title">実験手順</p>
-          <label>手順のメモや配布プリントの内容を貼り付けてください（箇条書きでOK）</label>
-          <textarea id="expMethod" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱&#10;3. 冷却後、分液漏斗で水層・有機層を分離"></textarea>
+          <label>手順のメモや配布プリントの内容を貼り付けてください</label>
+          <textarea id="expMethod" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱" oninput="scheduleSave()"></textarea>
         </div>
         <div class="card">
           <p class="card-title">実験結果・測定データ</p>
           <label>数値・観察結果などをそのまま貼り付けてください</label>
-          <textarea id="expResult" placeholder="例：&#10;・反応前の質量：12.3g&#10;・反応後の質量：9.8g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）"></textarea>
+          <textarea id="expResult" placeholder="例：&#10;・反応前の質量：12.3g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）" oninput="scheduleSave()"></textarea>
         </div>
         <div class="card">
           <p class="card-title">考察のポイント・気づき</p>
           <label>自分の考えやメモ、誤差の原因などを書いてください</label>
-          <textarea id="expDiscussion" placeholder="例：・収率が低かった原因は分液操作での損失か&#10;・沸点が理論値と一致→純度は高い"></textarea>
+          <textarea id="expDiscussion" placeholder="例：・収率が低かった原因は分液操作での損失か&#10;・沸点が理論値と一致→純度は高い" oninput="scheduleSave()"></textarea>
+        </div>
+        <div class="card">
+          <p class="card-title">参考資料のアップロード（任意）</p>
+          <label>実験プリントや参考資料のファイルをアップロードしてください</label>
+          ${fileUploadHTML('dropArea2','fileInput2')}
         </div>
         <div class="nav-btns">
           <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
           <button class="btn-primary" onclick="goStep(3)">次へ →</button>
         </div>`;
+      addSaveListeners();
+
     } else {
       el.innerHTML = genOptionsHTML('experiment');
+      addSaveListeners();
     }
   }
 }
@@ -419,7 +468,7 @@ function genOptionsHTML(m) {
       <div class="card">
         <div class="result-header">
           <p class="card-title">生成されたレポート</p>
-          <span class="tag${m === 'experiment' ? ' exp' : ''}">${m === 'experiment' ? '実験レポート' : '講義レポート'}</span>
+          <span class="tag${m==='experiment'?' exp':''}">${m==='experiment'?'実験レポート':'講義レポート'}</span>
         </div>
         <div class="result-box" id="resultText"></div>
         <div class="result-actions">
@@ -437,6 +486,7 @@ function genOptionsHTML(m) {
 async function generateReport(m) {
   const style = document.getElementById('style').value;
   const humanize = document.getElementById('humanize').value;
+  const fileTexts = uploadedFiles.map(f => `【添付ファイル: ${f.name}】\n${f.text}`).join('\n\n');
   let prompt = '';
 
   if (m === 'lecture') {
@@ -448,8 +498,9 @@ async function generateReport(m) {
     const grade = document.getElementById('grade')?.value || '';
     const reference = document.getElementById('reference')?.value.trim() || '';
     if (!theme) { alert('テーマを入力してください。'); goStep(1); return; }
-    if (!memo) { alert('メモを入力してください。'); goStep(2); return; }
-    const refPart = reference ? `\n\n【参考文章・構成メモ】\n${reference}` : '';
+    if (!memo && uploadedFiles.length === 0) { alert('メモを入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
+    const refPart = reference ? `\n\n【参考文章】\n${reference}` : '';
+    const filePart = fileTexts ? `\n\n【アップロードされた参考資料】\n${fileTexts}` : '';
     prompt = `あなたは大学生のレポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい講義レポートを作成してください。
 
 【条件】
@@ -461,17 +512,18 @@ async function generateReport(m) {
 【テーマ】${theme}
 
 【講義メモ・レジュメ】
-${memo}${refPart}
+${memo || '（メモなし）'}${refPart}${filePart}
 
 【出力ルール】
 - タイトル、序論、本論、結論の構成で書く
-- メモの内容を自分の考察として自然に組み込む
+- メモ・資料の内容を自分の考察として自然に組み込む
 - AIっぽい定型表現を避ける
 - 箇条書きは使わず全て文章で書く
 - 最初の行に「タイトル：〇〇」の形式でタイトルを出力する
 - 文字数は${length}字程度に近づける
 
 レポート本文のみ出力してください（説明・コメント不要）。`;
+
   } else {
     const expTitle = document.getElementById('expTitle')?.value.trim() || '';
     const expPurpose = document.getElementById('expPurpose')?.value.trim() || '';
@@ -481,8 +533,9 @@ ${memo}${refPart}
     const expDiscussion = document.getElementById('expDiscussion')?.value.trim() || '';
     const expLength = document.getElementById('expLength')?.value || '1200';
     const expGrade = document.getElementById('expGrade')?.value || '';
+    const filePart = fileTexts ? `\n\n【アップロードされた参考資料】\n${fileTexts}` : '';
     if (!expTitle) { alert('実験タイトルを入力してください。'); goStep(1); return; }
-    if (!expResult) { alert('実験結果を入力してください。'); goStep(2); return; }
+    if (!expResult && uploadedFiles.length === 0) { alert('実験結果を入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
     prompt = `あなたは大学生の実験レポート作成を支援する専門家です。以下の情報をもとに、自然で人間らしい実験レポートを作成してください。
 
 【条件】
@@ -490,11 +543,11 @@ ${memo}${refPart}
 文体：${style} / AI検知回避レベル：${humanize}
 
 【実験タイトル】${expTitle}
-【実験の目的・仮説】${expPurpose || '（省略）'}
-【使用器具・試薬】${expEquip || '（省略）'}
-【実験手順メモ】${expMethod || '（省略）'}
-【実験結果・データ】${expResult}
-【考察のポイント】${expDiscussion || '（省略）'}
+【実験の目的・仮説】${expPurpose||'（省略）'}
+【使用器具・試薬】${expEquip||'（省略）'}
+【実験手順メモ】${expMethod||'（省略）'}
+【実験結果・データ】${expResult||'（添付ファイル参照）'}
+【考察のポイント】${expDiscussion||'（省略）'}${filePart}
 
 【出力ルール】
 - 「目的」「実験方法」「結果」「考察」「結論」の5章構成で書く
@@ -515,7 +568,7 @@ ${memo}${refPart}
   const msgs = ['AIがレポートを構成しています...','文体を整えています...','AI検知を回避する表現に調整中...','最終チェックをしています...'];
   let mi = 0;
   const msgEl = document.getElementById('loadingMsg');
-  const t = setInterval(() => { mi = (mi+1) % msgs.length; msgEl.textContent = msgs[mi]; }, 2200);
+  const t = setInterval(() => { mi=(mi+1)%msgs.length; msgEl.textContent=msgs[mi]; }, 2200);
 
   try {
     const res = await fetch('/api/generate', {
@@ -546,6 +599,10 @@ function copyResult() {
   });
 }
 
+// 起動時に保存データを復元
+const saved = loadData();
+if (saved.mode) { mode = saved.mode; }
+if (saved.step) { step = parseInt(saved.step); }
 renderApp();
 </script>
 </body>
