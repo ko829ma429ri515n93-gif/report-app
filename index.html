@@ -602,8 +602,11 @@ function copyResult() {
 // 起動時に保存データを復元
 const saved = loadData();
 if (saved.mode) { mode = saved.mode; }
-if (saved.step) { step = parseInt(saved.step); }
 renderApp();
+setTimeout(() => {
+  applyData(saved);
+  renderFileList();
+}, 100);
 </script>
 </body>
 </html>
