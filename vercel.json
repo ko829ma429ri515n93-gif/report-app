@@ -1,11 +1,11 @@
 {
-  "functions": {
-    "generate.js": {
-      "runtime": "edge"
-    }
-  },
-  "rewrites": [
-    { "source": "/api/generate", "destination": "/generate.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "version": 2,
+  "builds": [
+    { "src": "generate.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/generate", "dest": "/generate.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
