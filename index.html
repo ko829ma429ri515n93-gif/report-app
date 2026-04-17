@@ -174,7 +174,17 @@
         <p class="card-title">生成オプション</p>
         <div class="row2">
           <div><label>文体のスタイル</label><select id="l-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
-          <div><label>AI検知回避の強度</label><select id="l-humanize"><option value="標準">標準（自然な文章）</option><option value="強め">強め（より人間らしい表現）</option><option value="最強">最強（独自表現を最大化）</option></select></div>
+          <div>
+            <label>文章レベル（1〜5）</label>
+            <select id="l-level">
+              <option value="1">レベル1 ― 基礎的・粗削り（成績C〜D相当）</option>
+              <option value="2">レベル2 ― 平均的・やや雑（成績B〜C相当）</option>
+              <option value="3" selected>レベル3 ― 標準・無難（成績B相当）</option>
+              <option value="4">レベル4 ― 丁寧・論理的（成績A相当）</option>
+              <option value="5">レベル5 ― 完璧・論文級（成績S相当）</option>
+            </select>
+            <p class="tip">※ 普段の成績に合わせて選択してください</p>
+          </div>
         </div>
       </div>
       <button class="btn-primary" id="l-genBtn" onclick="generateReport('lecture')">✦ レポートを生成する</button>
@@ -240,7 +250,17 @@
         <p class="card-title">生成オプション</p>
         <div class="row2">
           <div><label>文体のスタイル</label><select id="e-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
-          <div><label>AI検知回避の強度</label><select id="e-humanize"><option value="標準">標準（自然な文章）</option><option value="強め">強め（より人間らしい表現）</option><option value="最強">最強（独自表現を最大化）</option></select></div>
+          <div>
+            <label>文章レベル（1〜5）</label>
+            <select id="e-level">
+              <option value="1">レベル1 ― 基礎的・粗削り（成績C〜D相当）</option>
+              <option value="2">レベル2 ― 平均的・やや雑（成績B〜C相当）</option>
+              <option value="3" selected>レベル3 ― 標準・無難（成績B相当）</option>
+              <option value="4">レベル4 ― 丁寧・論理的（成績A相当）</option>
+              <option value="5">レベル5 ― 完璧・論文級（成績S相当）</option>
+            </select>
+            <p class="tip">※ 普段の成績に合わせて選択してください</p>
+          </div>
         </div>
       </div>
       <button class="btn-primary" id="e-genBtn" onclick="generateReport('experiment')">✦ レポートを生成する</button>
@@ -411,22 +431,39 @@ async function generateReport(m) {
     const grade = document.getElementById('l-grade').value;
     const ref   = document.getElementById('l-reference').value.trim();
     const style = document.getElementById('l-style').value;
-    const humanize = document.getElementById('l-humanize').value;
+    const level = document.getElementById('l-level').value;
     if (!theme) { alert('①基本情報のテーマを入力してください。'); goStep(1); return; }
     if (!memo && uploadedFiles.length === 0) { alert('②メモを入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
     const refPart  = ref ? `\n\n【参考文章】\n${ref}` : '';
     const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
-    prompt = `あなたは大学生のレポート作成を支援する専門家です。以下をもとに自然で人間らしい講義レポートを作成してください。
 
-【条件】学部：${dept} / 種類：${ltype} / 学年：${grade} / 文字数：${length}字程度
-文体：${style} / AI検知回避：${humanize}
+    const levelGuide = {
+      '1': '文章レベル1：基礎は押さえつつも粗削りで、論理の飛躍や説明不足が若干残る。数値・固有名詞は最低限使うが、分析の深さは浅め。文末表現のバリエーションは少なく、構成はシンプル。成績C〜D相当の学生が書いたような文章。',
+      '2': '文章レベル2：数値や固有名詞を適度に使い、論理はおおむね通っているが、考察がやや表面的。文末表現に若干の繰り返しがある。成績B〜C相当の平均的な学生の文章。',
+      '3': '文章レベル3：数値・固有名詞を適切に使い、論理構成も標準的。分析は無難にまとまっているが、独自の視点や鋭さには欠ける。成績B相当の標準的な文章。',
+      '4': '文章レベル4：数値・固有名詞を積極的に活用し、論理展開が丁寧で説得力がある。独自の考察や反論への言及もある。文末表現も多様。成績A相当の優秀な学生の文章。',
+      '5': '文章レベル5：数値・固有名詞・専門用語を高密度に使い、反論への再反論・独自の将来予測まで含む論文級の文章。文末は6種類以上を均等使用。成績S相当の最高水準。'
+    };
+
+    prompt = `あなたは大学レポートの執筆支援の専門家です。以下の条件でレポートを生成してください。
+
+【文章レベルの指示】
+${levelGuide[level]}
+
+【基本条件】
+学部：${dept} / 種類：${ltype} / 学年：${grade} / 文字数：${length}字程度 / 文体：${style}
+
+【共通ルール（レベルに関わらず必ず守る）】
+- 数値データを必ず使う（2025〜2026年の推定値可）
+- 固有名詞（企業名・地名・機関名）を最低1つ以上使う
+- 箇条書き禁止・全て文章形式
+- 最初の行に「タイトル：〇〇」形式でタイトルを記載
+- タイトル/序論/本論/結論の構成
 
 【テーマ】${theme}
-【メモ・レジュメ】${memo||'（なし）'}${refPart}${filePart}
+【メモ・レジュメ】${memo || '（なし）'}${refPart}${filePart}
 
-【ルール】タイトル/序論/本論/結論の構成、箇条書き禁止、全て文章、最初の行に「タイトル：〇〇」、${length}字程度
-
-レポート本文のみ出力（説明不要）。`;
+レポート本文のみ出力（説明・コメント不要）。`;
     runGenerate('l', prompt);
 
   } else {
@@ -439,22 +476,42 @@ async function generateReport(m) {
     const length = document.getElementById('e-length').value || '1200';
     const grade  = document.getElementById('e-grade').value;
     const style  = document.getElementById('e-style').value;
-    const humanize = document.getElementById('e-humanize').value;
+    const level  = document.getElementById('e-level').value;
     const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
     if (!title) { alert('①基本情報の実験タイトルを入力してください。'); goStep(1); return; }
     if (!result && uploadedFiles.length === 0) { alert('②実験結果を入力するか、ファイルをアップロードしてください。'); goStep(2); return; }
-    prompt = `あなたは大学生の実験レポート作成支援の専門家です。以下をもとに自然で人間らしい実験レポートを作成してください。
 
-【条件】学年：${grade} / 文字数：${length}字程度 / 文体：${style} / AI検知回避：${humanize}
+    const levelGuide = {
+      '1': '文章レベル1：基礎は押さえつつも粗削りで、考察が浅め。数値は最低限使うが分析はシンプル。成績C〜D相当。',
+      '2': '文章レベル2：数値や考察を適度に含むが表面的。成績B〜C相当の平均的な文章。',
+      '3': '文章レベル3：数値・考察を標準的にまとめた無難な実験レポート。成績B相当。',
+      '4': '文章レベル4：数値を積極活用し、誤差の原因分析や理論値との比較が丁寧。成績A相当。',
+      '5': '文章レベル5：数値・専門用語・誤差分析・理論的考察を高密度に組み込んだ論文級。成績S相当。'
+    };
 
-【タイトル】${title}
-【目的】${purpose||'省略'}【器具・試薬】${equip||'省略'}
-【手順】${method||'省略'}【結果・データ】${result||'添付参照'}
-【考察メモ】${disc||'省略'}${filePart}
+    prompt = `あなたは大学の実験レポート執筆支援の専門家です。以下の条件で実験レポートを生成してください。
 
-【ルール】目的/実験方法/結果/考察/結論の5章構成、数値を文章に組み込む、箇条書き禁止、最初の行に「タイトル：〇〇」、${length}字程度
+【文章レベルの指示】
+${levelGuide[level]}
 
-レポート本文のみ出力（説明不要）。`;
+【基本条件】
+学年：${grade} / 文字数：${length}字程度 / 文体：${style}
+
+【共通ルール（レベルに関わらず必ず守る）】
+- 測定データの数値を必ず文章に組み込む
+- 箇条書き禁止・全て文章形式
+- 最初の行に「タイトル：〇〇」形式でタイトルを記載
+- 目的/実験方法/結果/考察/結論の5章構成
+
+【実験情報】
+タイトル：${title}
+目的：${purpose||'省略'}
+器具・試薬：${equip||'省略'}
+手順：${method||'省略'}
+結果・データ：${result||'添付参照'}
+考察メモ：${disc||'省略'}${filePart}
+
+レポート本文のみ出力（説明・コメント不要）。`;
     runGenerate('e', prompt);
   }
 }
