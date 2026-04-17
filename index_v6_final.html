@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIレポート作成アシスタント</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f3ef; --surface: #ffffff; --border: #e2e0da; --border-strong: #c8c5be;
+    --text: #1a1a18; --text-muted: #6b6860; --text-hint: #a09e9a;
+    --accent: #E8641A; --accent-hover: #cf5815;
+    --radius-md: 8px; --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 56px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .logo { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; }
+  .header-title { font-size: 16px; font-weight: 600; cursor: pointer; }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .save-badge { margin-left: auto; font-size: 11px; color: #27500a; background: #eaf3de; padding: 3px 10px; border-radius: 12px; display: none; flex-shrink: 0; }
+  .container { max-width: 780px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+  /* ページ切替 */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* レポート一覧 */
+  .list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+  .list-title { font-size: 20px; font-weight: 600; }
+  .btn-new { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background 0.15s; }
+  .btn-new:hover { background: var(--accent-hover); }
+  .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .report-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; gap: 8px; }
+  .report-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(232,100,26,0.1); }
+  .report-card-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+  .report-card-preview { font-size: 12px; color: var(--text-muted); line-height: 1.6; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+  .report-card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .report-card-date { font-size: 11px; color: var(--text-hint); }
+  .report-card-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #e6f1fb; color: #0c447c; font-weight: 500; }
+  .report-card-tag.exp { background: #eaf3de; color: #27500a; }
+  .report-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .btn-card-del { padding: 4px 10px; border-radius: 6px; border: 1px solid #f09595; background: #fcebeb; font-size: 11px; cursor: pointer; color: #791f1f; font-family: var(--font); }
+  .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--text-hint); }
+
+  /* エディタページ */
+  .editor-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+  .btn-back { padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text); font-family: var(--font); }
+  .btn-back:hover { background: var(--bg); }
+
+  /* 既存スタイル */
+  .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+  .mode-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; cursor: pointer; transition: border-color 0.15s; }
+  .mode-card:hover { border-color: var(--border-strong); }
+  .mode-card.active { border: 2px solid var(--accent); }
+  .mode-icon { font-size: 20px; margin-bottom: 6px; }
+  .mode-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .mode-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .step-nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .step-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text-muted); transition: all 0.15s; font-family: var(--font); }
+  .step-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .card-research { border: 2px solid var(--accent); background: #fff8f5; }
+  label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  input[type=text], input[type=number], select, textarea { width: 100%; border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 9px 12px; font-size: 14px; background: var(--surface); color: var(--text); font-family: var(--font); transition: border-color 0.15s; outline: none; }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,100,26,0.12); }
+  textarea { resize: vertical; min-height: 85px; line-height: 1.6; }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button { opacity: 1; }
+  .char-wrap { position: relative; }
+  .char-unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none; }
+  .char-wrap input { padding-right: 36px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { margin-bottom: 14px; }
+  .tip { font-size: 12px; color: var(--text-hint); margin-top: 5px; }
+  .file-upload-area { border: 2px dashed var(--border-strong); border-radius: var(--radius-md); padding: 1.25rem; text-align: center; cursor: pointer; background: var(--bg); margin-top: 8px; transition: border-color 0.15s; }
+  .file-upload-area:hover { border-color: var(--accent); }
+  .file-upload-area input[type=file] { display: none; }
+  .file-upload-text { font-size: 13px; color: var(--text-muted); }
+  .file-upload-text span { color: var(--accent); font-weight: 500; }
+  .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 7px 10px; font-size: 13px; }
+  .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item-size { font-size: 11px; color: var(--text-hint); flex-shrink: 0; }
+  .file-remove { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 16px; padding: 0 2px; line-height: 1; font-family: var(--font); }
+  .file-remove:hover { color: #e24b4a; }
+  .btn-primary { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s, opacity 0.15s; font-family: var(--font); margin-top: 4px; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-secondary { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; font-family: var(--font); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger { padding: 7px 14px; border-radius: var(--radius-md); border: 1px solid #f09595; background: #fcebeb; font-size: 12px; cursor: pointer; color: #791f1f; font-family: var(--font); }
+  .btn-research { padding: 9px 18px; border-radius: var(--radius-md); border: 2px solid var(--accent); background: var(--accent); color: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; }
+  .btn-research:hover { opacity: 0.85; }
+  .btn-research:disabled { opacity: 0.45; cursor: not-allowed; }
+  .nav-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; align-items: center; }
+  .nav-btns .btn-primary { max-width: 180px; }
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; padding: 1rem 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:0.25} 40%{opacity:1} }
+  .result-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; font-size: 14px; line-height: 1.85; color: var(--text); white-space: pre-wrap; min-height: 120px; }
+  .research-box { background: #fff8f5; border: 1px solid #f5c4b3; border-radius: var(--radius-md); padding: 1rem 1.25rem; font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap; margin-bottom: 12px; }
+  .result-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: #e6f1fb; color: #0c447c; font-weight: 500; }
+  .tag.exp { background: #eaf3de; color: #27500a; }
+  .copy-ok { font-size: 12px; color: #27500a; font-weight: 500; }
+  .result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .result-header .card-title { margin-bottom: 0; }
+  .hidden { display: none !important; }
+  .badge-tip { display: inline-block; background: #fff0e6; color: #993C1D; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 500; }
+  .hint-box { background: #f5f3ef; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+  .hint-box-inner { background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: var(--text); }
+  .hint-label { font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+  .preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .preview-modal { background: var(--surface); border-radius: var(--radius-lg); max-width: 700px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; }
+  .preview-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .preview-title { font-size: 15px; font-weight: 600; }
+  .preview-close { background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-muted); padding: 0 4px; font-family: var(--font); line-height: 1; }
+  .preview-body { padding: 1.25rem; overflow-y: auto; flex: 1; font-size: 14px; line-height: 1.85; white-space: pre-wrap; color: var(--text); }
+  .footer { text-align: center; padding: 2rem 1rem; font-size: 12px; color: var(--text-hint); }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } .mode-switch { grid-template-columns: 1fr; } .container { padding: 1.25rem 0.75rem 3rem; } .report-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">✏</div>
+  <div onclick="showPage('list')" style="cursor:pointer">
+    <div class="header-title">AIレポート作成アシスタント</div>
+    <div class="header-sub">参考資料とメモを入れるだけで自然なレポートを生成</div>
+  </div>
+  <div class="save-badge" id="saveBadge">✓ 自動保存済み</div>
+</header>
+
+<main class="container">
+
+  <!-- ===== レポート一覧ページ ===== -->
+  <div class="page active" id="page-list">
+    <div class="list-header">
+      <p class="list-title">レポート一覧</p>
+      <button class="btn-new" onclick="startNewReport()">＋ 新規レポート作成</button>
+    </div>
+    <div id="reportGrid"></div>
+  </div>
+
+  <!-- ===== エディタページ ===== -->
+  <div class="page" id="page-editor">
+    <div class="editor-topbar">
+      <button class="btn-back" onclick="showPage('list')">← 一覧に戻る</button>
+    </div>
+
+    <div class="mode-switch">
+      <div class="mode-card active" id="modeA" onclick="setMode('lecture')">
+        <div class="mode-icon">📝</div>
+        <div class="mode-title">講義レポートモード</div>
+        <div class="mode-desc">論述・調査・書評など。文系・理系どちらにも対応</div>
+      </div>
+      <div class="mode-card" id="modeB" onclick="setMode('experiment')">
+        <div class="mode-icon">🔬</div>
+        <div class="mode-title">実験レポートモード</div>
+        <div class="mode-desc">目的・方法・結果・考察の構成に特化</div>
+      </div>
+    </div>
+
+    <div class="step-nav" id="stepNav"></div>
+
+    <!-- 講義モード -->
+    <div id="lec-panels">
+      <div class="step-panel" id="lec-step1">
+        <div class="card">
+          <p class="card-title">基本情報</p>
+          <div class="row2 field">
+            <div><label>学部・専攻の種類</label>
+              <select id="l-dept"><option value="理系">理系（理工・医・農・情報など）</option><option value="文系">文系（法・経・文・社会など）</option><option value="その他">その他・学際系</option></select></div>
+            <div><label>レポートの種類</label>
+              <select id="l-ltype"><option value="論述レポート">論述レポート（意見・考察）</option><option value="調査レポート">調査・文献レポート</option><option value="書評レポート">書評・要約レポート</option></select></div>
+          </div>
+          <div class="field">
+            <label>テーマ・課題タイトル <span style="color:#e24b4a">*</span></label>
+            <input type="text" id="l-theme" placeholder="例：地球温暖化が農業に与える影響について">
+          </div>
+          <div class="row2">
+            <div><label>文字数の目安</label><div class="char-wrap"><input type="number" id="l-length" value="1200" min="100" max="20000" step="100"><span class="char-unit">字</span></div></div>
+            <div><label>学年</label><select id="l-grade"><option>学部1年生</option><option>学部2年生</option><option selected>学部3年生</option><option>学部4年生</option><option>修士1年生</option><option>修士2年生</option><option>博士課程</option></select></div>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+          <button class="btn-danger" onclick="resetAll()">入力をリセット</button>
+        </div>
+      </div>
+
+      <div class="step-panel" id="lec-step2">
+        <div class="card">
+          <p class="card-title">講義のレジュメ・メモ</p>
+          <label>授業のレジュメや自分のメモをそのまま貼り付けてください</label>
+          <textarea id="l-memo" placeholder="箇条書きでもキーワードだけでもOKです"></textarea>
+          <p class="tip">キーワードだけでも大丈夫です</p>
+        </div>
+        <div class="card">
+          <p class="card-title">参考資料のアップロード（任意）</p>
+          <div class="file-upload-area" onclick="document.getElementById('l-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="event.preventDefault();this.style.borderColor='';handleFiles(event.dataTransfer.files)">
+            <input type="file" id="l-file-input" multiple accept=".txt,.pdf,.md" onchange="handleFiles(this.files)">
+            <div style="font-size:24px;margin-bottom:6px">📂</div>
+            <div class="file-upload-text">ドラッグ＆ドロップ または <span>ファイルを選択</span></div>
+            <div style="font-size:11px;color:var(--text-hint);margin-top:4px">対応形式：txt / pdf / md（各5MBまで）</div>
+          </div>
+          <div class="file-list" id="file-list"></div>
+        </div>
+        <div class="card">
+          <p class="card-title">参考にしたい文章（任意）</p>
+          <textarea id="l-reference" placeholder="参考レポートの要点や構成メモを貼り付けてください..."></textarea>
+        </div>
+        <div class="card card-research">
+          <p class="card-title">調査項目の確認 <span class="badge-tip">ハルシネーション防止</span></p>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px">AIが架空のデータを使うのを防ぐため、まず「調べるべき項目」を生成します。</p>
+          <p style="font-size:13px;background:#e6f1fb;color:#0c447c;border-radius:8px;padding:10px 14px;margin-bottom:14px">💡 <strong>活用のヒント：</strong>下の調査項目をコピーして、GeminiのDeep Research・ChatGPTのDeep Research機能に貼り付けると、より正確な情報を素早く収集できます。調査結果をStep 2の入力欄に貼り付けてください。</p>
+          <button class="btn-research" id="l-research-btn" onclick="getResearchList('l')">調査項目を生成する</button>
+          <div id="l-research-loading" class="hidden" style="margin-top:8px">
+            <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>調査項目を生成中...</span></div>
+          </div>
+          <div id="l-research-area" class="hidden" style="margin-top:14px">
+            <label style="font-weight:600;color:var(--text);margin-bottom:8px;display:block">Step 1｜AIが提示した調査項目</label>
+            <div class="research-box" id="l-research-text"></div>
+            <label style="font-weight:600;color:var(--text);margin-bottom:6px;display:block">Step 2｜調べた内容を入力してください <span style="font-weight:400;color:var(--text-muted)">（わからない項目は空欄でOK）</span></label>
+            <textarea id="l-research-data" placeholder="調べた内容をここに入力してください..." style="min-height:150px"></textarea>
+            <p class="tip">※ここに入力した情報のみをAIが使用します。</p>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+        </div>
+      </div>
+
+      <div class="step-panel" id="lec-step3">
+        <div class="card">
+          <p class="card-title">生成オプション</p>
+          <div class="row2">
+            <div><label>文体のスタイル</label><select id="l-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
+            <div>
+              <label>文章レベル（1〜5）</label>
+              <select id="l-level">
+                <option value="1">★☆☆☆☆ 簡潔</option>
+                <option value="2">★★☆☆☆ 普通</option>
+                <option value="3" selected>★★★☆☆ 良好</option>
+                <option value="4">★★★★☆ 優秀</option>
+                <option value="5">★★★★★ 完璧</option>
+              </select>
+              <p class="tip">※ 普段の成績に合わせて選択してください</p>
+            </div>
+          </div>
+        </div>
+        <div class="hint-box">
+          <p style="font-weight:600;color:var(--text);margin-bottom:8px">💬 生成後の確認方法（任意）</p>
+          <p style="margin-bottom:10px">心配な方は、生成されたレポートをお気に入りのAIにコピー＆ペーストして以下のプロンプトを試してみてください。</p>
+          <div class="hint-box-inner" style="margin-bottom:8px">
+            <p class="hint-label">① AI検知チェック用</p>
+            <p>「これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）」</p>
+          </div>
+          <div class="hint-box-inner">
+            <p class="hint-label">② ファクトチェック用</p>
+            <p>「あなたはプロのリサーチャーです。このレポートに記載されている情報のファクトチェックを行ってください。また、データが正しくない場合は正しい情報もDeep Research機能を活用してリサーチして教えてください」</p>
+          </div>
+        </div>
+        <button class="btn-primary" id="l-genBtn" onclick="generateReport('lecture')">✦ レポートを生成する</button>
+        <div id="l-loading" class="hidden" style="margin-top:1rem">
+          <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="l-loadingMsg">AIがレポートを作成しています...</span></div>
+        </div>
+        <div id="l-resultArea" class="hidden" style="margin-top:1.5rem">
+          <div class="card">
+            <div class="result-header"><p class="card-title">生成されたレポート</p><span class="tag">講義レポート</span></div>
+            <div class="result-box" id="l-resultText"></div>
+            <div class="result-actions">
+              <button class="btn-secondary" onclick="copyResult('l')">コピー</button>
+              <span id="l-copyOk" class="copy-ok hidden">✓ コピーしました</span>
+              <button class="btn-secondary" onclick="openPreview('l')">プレビュー</button>
+              <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
+              <button class="btn-secondary" id="l-checkBtn" onclick="checkReport('l')" style="background:#fff0e6;border-color:#f5c4b3;color:#993C1D">🔍 AI検査</button>
+            </div>
+            <div id="l-checkLoading" class="hidden" style="margin-top:8px">
+              <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>AIが評価中...</span></div>
+            </div>
+            <div id="l-checkArea" class="hidden" style="margin-top:12px">
+              <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px">
+                <p style="font-weight:600;font-size:14px;margin-bottom:10px">🔍 AI検査結果</p>
+                <div id="l-checkResult" style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1a1a18"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px"><button class="btn-secondary" onclick="goStep(2)">← 戻る</button></div>
+      </div>
+    </div>
+
+    <!-- 実験モード -->
+    <div id="exp-panels" class="hidden">
+      <div class="step-panel" id="exp-step1">
+        <div class="card">
+          <p class="card-title">実験の基本情報</p>
+          <div class="field"><label>実験タイトル・科目名 <span style="color:#e24b4a">*</span></label><input type="text" id="e-title" placeholder="例：酢酸エチルの合成と精製"></div>
+          <div class="row2 field">
+            <div><label>文字数の目安</label><div class="char-wrap"><input type="number" id="e-length" value="1200" min="100" max="20000" step="100"><span class="char-unit">字</span></div></div>
+            <div><label>学年</label><select id="e-grade"><option>学部1年生</option><option>学部2年生</option><option selected>学部3年生</option><option>学部4年生</option><option>修士1年生</option><option>修士2年生</option><option>博士課程</option></select></div>
+          </div>
+          <div class="field"><label>実験の目的・仮説</label><textarea id="e-purpose" placeholder="例：エステル化反応の仕組みを理解し、酢酸とエタノールから酢酸エチルを合成する。"></textarea></div>
+          <div><label>使用器具・試薬</label><textarea id="e-equip" placeholder="例：酢酸 10mL、エタノール 15mL、濃硫酸、丸底フラスコ..." style="min-height:60px"></textarea></div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-primary" onclick="goStep(2)">次へ →</button>
+          <button class="btn-danger" onclick="resetAll()">入力をリセット</button>
+        </div>
+      </div>
+
+      <div class="step-panel" id="exp-step2">
+        <div class="card"><p class="card-title">実験手順</p><textarea id="e-method" placeholder="例：&#10;1. 丸底フラスコに酢酸・エタノール・濃硫酸を加える&#10;2. 還流冷却器をつけて60℃で30分加熱"></textarea></div>
+        <div class="card"><p class="card-title">実験結果・測定データ <span style="color:#e24b4a;font-size:13px">*</span></p><textarea id="e-result" placeholder="例：&#10;・反応前の質量：12.3g&#10;・収率：79.7%&#10;・沸点：76〜77℃（理論値77℃）"></textarea></div>
+        <div class="card"><p class="card-title">考察のポイント・気づき</p><textarea id="e-discussion" placeholder="例：・収率が低かった原因は分液操作での損失か"></textarea></div>
+        <div class="card">
+          <p class="card-title">参考資料のアップロード（任意）</p>
+          <div class="file-upload-area" onclick="document.getElementById('e-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="event.preventDefault();this.style.borderColor='';handleFiles(event.dataTransfer.files)">
+            <input type="file" id="e-file-input" multiple accept=".txt,.pdf,.md" onchange="handleFiles(this.files)">
+            <div style="font-size:24px;margin-bottom:6px">📂</div>
+            <div class="file-upload-text">ドラッグ＆ドロップ または <span>ファイルを選択</span></div>
+          </div>
+          <div class="file-list" id="e-file-list"></div>
+        </div>
+        <div class="card card-research">
+          <p class="card-title">調査項目の確認 <span class="badge-tip">ハルシネーション防止</span></p>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:6px">AIが架空のデータを使うのを防ぐため、まず「調べるべき項目」を生成します。</p>
+          <p style="font-size:13px;background:#e6f1fb;color:#0c447c;border-radius:8px;padding:10px 14px;margin-bottom:14px">💡 <strong>活用のヒント：</strong>下の調査項目をコピーして、GeminiのDeep Research・ChatGPTのDeep Research機能に貼り付けると、より正確な情報を素早く収集できます。</p>
+          <button class="btn-research" id="e-research-btn" onclick="getResearchList('e')">調査項目を生成する</button>
+          <div id="e-research-loading" class="hidden" style="margin-top:8px">
+            <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>調査項目を生成中...</span></div>
+          </div>
+          <div id="e-research-area" class="hidden" style="margin-top:14px">
+            <label style="font-weight:600;color:var(--text);margin-bottom:8px;display:block">Step 1｜AIが提示した調査項目</label>
+            <div class="research-box" id="e-research-text"></div>
+            <label style="font-weight:600;color:var(--text);margin-bottom:6px;display:block">Step 2｜調べた内容を入力してください</label>
+            <textarea id="e-research-data" placeholder="調べた内容をここに入力してください..." style="min-height:120px"></textarea>
+            <p class="tip">※ここに入力した情報のみをAIが使用します。</p>
+          </div>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-secondary" onclick="goStep(1)">← 戻る</button>
+          <button class="btn-primary" onclick="goStep(3)">次へ →</button>
+        </div>
+      </div>
+
+      <div class="step-panel" id="exp-step3">
+        <div class="card">
+          <p class="card-title">生成オプション</p>
+          <div class="row2">
+            <div><label>文体のスタイル</label><select id="e-style"><option value="標準的な大学レポート体">標準的な大学レポート体</option><option value="やや硬めの学術的な文体">やや硬めの学術的な文体</option><option value="読みやすいやわらかめの文体">読みやすいやわらかめの文体</option></select></div>
+            <div>
+              <label>文章レベル（1〜5）</label>
+              <select id="e-level">
+                <option value="1">★☆☆☆☆ 簡潔</option>
+                <option value="2">★★☆☆☆ 普通</option>
+                <option value="3" selected>★★★☆☆ 良好</option>
+                <option value="4">★★★★☆ 優秀</option>
+                <option value="5">★★★★★ 完璧</option>
+              </select>
+              <p class="tip">※ 普段の成績に合わせて選択してください</p>
+            </div>
+          </div>
+        </div>
+        <div class="hint-box">
+          <p style="font-weight:600;color:var(--text);margin-bottom:8px">💬 生成後の確認方法（任意）</p>
+          <p style="margin-bottom:10px">心配な方は、生成されたレポートをお気に入りのAIにコピー＆ペーストして以下のプロンプトを試してみてください。</p>
+          <div class="hint-box-inner" style="margin-bottom:8px">
+            <p class="hint-label">① AI検知チェック用</p>
+            <p>「これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。そのうえで以下のレポートを見て評価をつけてください（A〜F）」</p>
+          </div>
+          <div class="hint-box-inner">
+            <p class="hint-label">② ファクトチェック用</p>
+            <p>「あなたはプロのリサーチャーです。このレポートに記載されている情報のファクトチェックを行ってください。」</p>
+          </div>
+        </div>
+        <button class="btn-primary" id="e-genBtn" onclick="generateReport('experiment')">✦ レポートを生成する</button>
+        <div id="e-loading" class="hidden" style="margin-top:1rem">
+          <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="e-loadingMsg">AIがレポートを作成しています...</span></div>
+        </div>
+        <div id="e-resultArea" class="hidden" style="margin-top:1.5rem">
+          <div class="card">
+            <div class="result-header"><p class="card-title">生成されたレポート</p><span class="tag exp">実験レポート</span></div>
+            <div class="result-box" id="e-resultText"></div>
+            <div class="result-actions">
+              <button class="btn-secondary" onclick="copyResult('e')">コピー</button>
+              <span id="e-copyOk" class="copy-ok hidden">✓ コピーしました</span>
+              <button class="btn-secondary" onclick="openPreview('e')">プレビュー</button>
+              <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+              <button class="btn-secondary" id="e-checkBtn" onclick="checkReport('e')" style="background:#fff0e6;border-color:#f5c4b3;color:#993C1D">🔍 AI検査</button>
+            </div>
+            <div id="e-checkLoading" class="hidden" style="margin-top:8px">
+              <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>AIが評価中...</span></div>
+            </div>
+            <div id="e-checkArea" class="hidden" style="margin-top:12px">
+              <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px">
+                <p style="font-weight:600;font-size:14px;margin-bottom:10px">🔍 AI検査結果</p>
+                <div id="e-checkResult" style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1a1a18"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px"><button class="btn-secondary" onclick="goStep(2)">← 戻る</button></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="preview-overlay hidden" id="previewOverlay" onclick="if(event.target===this)closePreview()">
+  <div class="preview-modal">
+    <div class="preview-header">
+      <span class="preview-title">レポートプレビュー</span>
+      <button class="preview-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+</div>
+
+<footer class="footer">AIが生成したレポートは必ず自分で内容を確認・修正してご使用ください。</footer>
+
+<script>
+let mode = 'lecture';
+let currentStep = 1;
+let uploadedFiles = [];
+let saveTimer = null;
+const DRAFT_KEY = 'reportApp_draft';
+const REPORTS_KEY = 'reportApp_reports';
+
+// ── ページ管理 ──────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'list') renderReportList();
+}
+
+function startNewReport() {
+  clearDraft();
+  showPage('editor');
+  setMode('lecture');
+  goStep(1);
+}
+
+// ── レポート一覧 ────────────────────────────────
+function getReports() {
+  try { return JSON.parse(localStorage.getItem(REPORTS_KEY) || '[]'); } catch { return []; }
+}
+
+function saveReport(title, content, type) {
+  const reports = getReports();
+  const id = Date.now().toString();
+  reports.unshift({
+    id, title: title || '無題のレポート',
+    content, type,
+    date: new Date().toLocaleDateString('ja-JP')
+  });
+  localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+  renderReportList();
+}
+
+function deleteReport(id) {
+  if (!confirm('このレポートを削除しますか？')) return;
+  const reports = getReports().filter(r => r.id !== id);
+  localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+  renderReportList();
+}
+
+function openReport(id) {
+  const reports = getReports();
+  const r = reports.find(r => r.id === id);
+  if (!r) return;
+  document.getElementById('previewBody').textContent = r.content;
+  document.getElementById('previewOverlay').classList.remove('hidden');
+}
+
+function renderReportList() {
+  const reports = getReports();
+  const grid = document.getElementById('reportGrid');
+  if (reports.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📄</div>
+      <p class="empty-text">まだレポートがありません</p>
+      <p class="empty-sub">「新規レポート作成」ボタンから始めましょう</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = `<div class="report-grid">${reports.map(r => `
+    <div class="report-card">
+      <p class="report-card-title">${escHtml(r.title)}</p>
+      <p class="report-card-preview">${escHtml(r.content.slice(0, 120))}...</p>
+      <div class="report-card-meta">
+        <span class="report-card-date">${r.date}</span>
+        <span class="report-card-tag${r.type === 'experiment' ? ' exp' : ''}">${r.type === 'experiment' ? '実験' : '講義'}</span>
+      </div>
+      <div class="report-card-actions">
+        <button class="btn-secondary" style="font-size:12px;padding:5px 12px" onclick="openReport('${r.id}')">開く</button>
+        <button class="btn-card-del" onclick="deleteReport('${r.id}')">削除</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 下書き保存 ──────────────────────────────────
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 600);
+}
+
+function doSave() {
+  const ids = ['l-dept','l-ltype','l-theme','l-length','l-grade','l-memo','l-reference',
+               'l-style','l-level','l-research-data',
+               'e-title','e-length','e-grade','e-purpose','e-equip',
+               'e-method','e-result','e-discussion','e-style','e-level','e-research-data'];
+  const data = { mode };
+  ids.forEach(id => { const el = document.getElementById(id); if (el) data[id] = el.value; });
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+  const badge = document.getElementById('saveBadge');
+  badge.style.display = 'block';
+  setTimeout(() => badge.style.display = 'none', 2000);
+}
+
+function loadDraft() {
+  try {
+    const data = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+    Object.keys(data).forEach(id => {
+      if (id === 'mode') return;
+      const el = document.getElementById(id);
+      if (el) el.value = data[id];
+    });
+    if (data.mode) setMode(data.mode);
+  } catch(e) {}
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  uploadedFiles = [];
+  renderFileLists();
+  document.querySelectorAll('input[type=text], textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[type=number]').forEach(el => el.value = 1200);
+  document.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+  ['l-research-area','e-research-area'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  ['l-resultArea','e-resultArea'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+}
+
+function resetAll() {
+  if (!confirm('入力内容をすべてリセットしますか？')) return;
+  clearDraft();
+}
+
+// ── ファイル処理 ────────────────────────────────
+async function handleFiles(files) {
+  for (const file of files) {
+    if (uploadedFiles.find(f => f.name === file.name)) continue;
+    if (file.size > 5 * 1024 * 1024) { alert(file.name + ' は5MBを超えています。'); continue; }
+    const ext = file.name.split('.').pop().toLowerCase();
+    let text;
+    if (ext === 'pdf') {
+      text = `[PDFファイル: ${file.name}]`;
+    } else {
+      text = await new Promise(res => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.readAsText(file, 'UTF-8');
+      });
+    }
+    uploadedFiles.push({ name: file.name, size: file.size, text });
+  }
+  renderFileLists();
+}
+
+function removeFile(name) {
+  uploadedFiles = uploadedFiles.filter(f => f.name !== name);
+  renderFileLists();
+}
+
+function renderFileLists() {
+  ['file-list','e-file-list'].forEach(listId => {
+    const el = document.getElementById(listId);
+    if (!el) return;
+    el.innerHTML = uploadedFiles.map(f => `
+      <div class="file-item">
+        <span>📄</span>
+        <span class="file-item-name">${f.name}</span>
+        <span class="file-item-size">${(f.size/1024).toFixed(0)}KB</span>
+        <button class="file-remove" onclick="removeFile('${f.name}')">✕</button>
+      </div>`).join('');
+  });
+}
+
+// ── モード・ステップ ────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById('modeA').classList.toggle('active', m === 'lecture');
+  document.getElementById('modeB').classList.toggle('active', m === 'experiment');
+  document.getElementById('lec-panels').classList.toggle('hidden', m !== 'lecture');
+  document.getElementById('exp-panels').classList.toggle('hidden', m === 'lecture');
+  currentStep = 1;
+  updateStepNav();
+  updateStepView();
+  scheduleSave();
+}
+
+function goStep(n) {
+  currentStep = n;
+  updateStepNav();
+  updateStepView();
+  window.scrollTo(0, 0);
+}
+
+function updateStepNav() {
+  const steps = mode === 'lecture'
+    ? ['① 基本情報','② メモ・資料入力','③ 生成オプション']
+    : ['① 基本情報','② 実験データ入力','③ 生成オプション'];
+  document.getElementById('stepNav').innerHTML = steps
+    .map((s,i) => `<button class="step-btn${currentStep===i+1?' active':''}" onclick="goStep(${i+1})">${s}</button>`)
+    .join('');
+}
+
+function updateStepView() {
+  const prefix = mode === 'lecture' ? 'lec' : 'exp';
+  [1,2,3].forEach(n => {
+    const el = document.getElementById(`${prefix}-step${n}`);
+    if (el) el.classList.toggle('active', n === currentStep);
+  });
+}
+
+// ── 調査項目生成 ────────────────────────────────
+async function getResearchList(prefix) {
+  const themeEl = prefix === 'l' ? document.getElementById('l-theme') : document.getElementById('e-title');
+  const theme = themeEl?.value.trim();
+  if (!theme) { alert('先に①基本情報のテーマ・タイトルを入力してください。'); goStep(1); return; }
+
+  const btn = document.getElementById(prefix + '-research-btn');
+  const loading = document.getElementById(prefix + '-research-loading');
+  const area = document.getElementById(prefix + '-research-area');
+  const textEl = document.getElementById(prefix + '-research-text');
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  area.classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: theme, mode: 'research' })
+    });
+    const data = await res.json();
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    if (data.error) { alert('エラー：' + data.error); return; }
+    textEl.textContent = data.result;
+    area.classList.remove('hidden');
+  } catch(e) {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    alert('エラーが発生しました。');
+  }
+}
+
+// ── レポート生成 ────────────────────────────────
+async function generateReport(m) {
+  const fileTexts = uploadedFiles.map(f => `【添付: ${f.name}】\n${f.text}`).join('\n\n');
+  let prompt = '';
+
+  const levelGuide = {
+    '1': '文章レベル1：粗削り・シンプル。成績C〜D相当。',
+    '2': '文章レベル2：平均的・やや表面的。成績B〜C相当。',
+    '3': '文章レベル3：標準的・無難。成績B相当。',
+    '4': '文章レベル4：論理的・丁寧・独自考察あり。成績A相当。',
+    '5': '文章レベル5：高密度・反論への再反論・独自予測含む論文級。成績S相当。'
+  };
+
+  if (m === 'lecture') {
+    const theme = document.getElementById('l-theme').value.trim();
+    const memo  = document.getElementById('l-memo').value.trim();
+    const dept  = document.getElementById('l-dept').value;
+    const ltype = document.getElementById('l-ltype').value;
+    const length= document.getElementById('l-length').value || '1200';
+    const grade = document.getElementById('l-grade').value;
+    const ref   = document.getElementById('l-reference').value.trim();
+    const style = document.getElementById('l-style').value;
+    const level = document.getElementById('l-level').value;
+    const researchData = document.getElementById('l-research-data')?.value.trim() || '';
+    if (!theme) { alert('①基本情報のテーマを入力してください。'); goStep(1); return; }
+    if (!memo && uploadedFiles.length === 0 && !researchData) { alert('②メモを入力するか、調査データを入力してください。'); goStep(2); return; }
+    const refPart = ref ? `\n\n【参考文章】\n${ref}` : '';
+    const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
+    const resPart = researchData ? `\n\n【調査済みデータ（これ以外の固有名詞・数値の使用を厳禁）】\n${researchData}` : '';
+    prompt = `以下の条件で講義レポートを生成してください。\n【文章レベル】${levelGuide[level]}\n【条件】学部：${dept} / 種類：${ltype} / 学年：${grade} / 文字数：${length}字程度 / 文体：${style}\n【テーマ】${theme}\n【メモ】${memo||'（なし）'}${refPart}${filePart}${resPart}\n【ルール】タイトル/序論/本論/結論の構成。最初の行に「タイトル：〇〇」。箇条書き禁止。全て文章形式。${researchData?'調査済みデータにない固有名詞・数値の追加を厳禁。':''}\nレポート本文のみ出力（説明・コメント不要）。`;
+    runGenerate('l', prompt, theme, 'lecture');
+  } else {
+    const title  = document.getElementById('e-title').value.trim();
+    const result = document.getElementById('e-result').value.trim();
+    const purpose= document.getElementById('e-purpose').value.trim();
+    const equip  = document.getElementById('e-equip').value.trim();
+    const method = document.getElementById('e-method').value.trim();
+    const disc   = document.getElementById('e-discussion').value.trim();
+    const length = document.getElementById('e-length').value || '1200';
+    const grade  = document.getElementById('e-grade').value;
+    const style  = document.getElementById('e-style').value;
+    const level  = document.getElementById('e-level').value;
+    const researchData = document.getElementById('e-research-data')?.value.trim() || '';
+    const filePart = fileTexts ? `\n\n【添付資料】\n${fileTexts}` : '';
+    const resPart = researchData ? `\n\n【調査済みデータ（これ以外の固有名詞・数値の使用を厳禁）】\n${researchData}` : '';
+    if (!title) { alert('①基本情報の実験タイトルを入力してください。'); goStep(1); return; }
+    if (!result && uploadedFiles.length === 0) { alert('②実験結果を入力してください。'); goStep(2); return; }
+    prompt = `以下の条件で実験レポートを生成してください。\n【文章レベル】${levelGuide[level]}\n【条件】学年：${grade} / 文字数：${length}字程度 / 文体：${style}\n【タイトル】${title}\n【目的】${purpose||'省略'} / 【器具・試薬】${equip||'省略'}\n【手順】${method||'省略'} / 【結果・データ】${result||'添付参照'}\n【考察メモ】${disc||'省略'}${filePart}${resPart}\n【ルール】目的/実験方法/結果/考察/結論の5章構成。最初の行に「タイトル：〇〇」。箇条書き禁止。全て文章形式。数値を文章に組み込む。\nレポート本文のみ出力（説明・コメント不要）。`;
+    runGenerate('e', prompt, title, 'experiment');
+  }
+}
+
+async function runGenerate(prefix, prompt, title, type) {
+  const btn = document.getElementById(prefix+'-genBtn');
+  const loading = document.getElementById(prefix+'-loading');
+  const resultArea = document.getElementById(prefix+'-resultArea');
+  const resultText = document.getElementById(prefix+'-resultText');
+  const msgEl = document.getElementById(prefix+'-loadingMsg');
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  resultArea.classList.add('hidden');
+  const msgs = ['AIがレポートを構成しています...','事実確認をしています...','文体を整えています...','最終チェックをしています...'];
+  let mi = 0;
+  const t = setInterval(() => { mi=(mi+1)%msgs.length; msgEl.textContent=msgs[mi]; }, 2500);
+  try {
+    const researchData = document.getElementById(prefix+'-research-data')?.value.trim() || '';
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, mode: 'generate', researchData })
+    });
+    const data = await res.json();
+    clearInterval(t);
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    const text = data.error ? 'エラー：'+data.error : data.result;
+    resultText.textContent = text;
+    resultArea.classList.remove('hidden');
+    // レポート一覧に自動保存
+    if (!data.error) saveReport(title, text, type);
+  } catch(e) {
+    clearInterval(t);
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    resultText.textContent = 'エラーが発生しました。もう一度お試しください。';
+    resultArea.classList.remove('hidden');
+  }
+}
+
+function copyResult(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const ok = document.getElementById(prefix+'-copyOk');
+    ok.classList.remove('hidden');
+    setTimeout(() => ok.classList.add('hidden'), 2000);
+  });
+}
+
+function openPreview(prefix) {
+  document.getElementById('previewBody').textContent = document.getElementById(prefix+'-resultText').textContent;
+  document.getElementById('previewOverlay').classList.remove('hidden');
+}
+
+function closePreview() {
+  document.getElementById('previewOverlay').classList.add('hidden');
+}
+
+document.addEventListener('input', e => { if (e.target.matches('input,select,textarea')) scheduleSave(); });
+document.addEventListener('change', e => { if (e.target.matches('select')) scheduleSave(); });
+
+// ── AI検査 ──────────────────────────────────────
+async function checkReport(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  if (!text || text.startsWith('エラー')) { alert('先にレポートを生成してください。'); return; }
+
+  const btn = document.getElementById(prefix+'-checkBtn');
+  const loading = document.getElementById(prefix+'-checkLoading');
+  const area = document.getElementById(prefix+'-checkArea');
+  const result = document.getElementById(prefix+'-checkResult');
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  area.classList.add('hidden');
+
+  const checkPrompt = `あなたはAIが生成した文章の検査に特化した厳格な大学教授です。以下のレポートを評価してください。
+
+【評価項目と配点】
+①AI臭スコア（0〜25点）：AIっぽい定型表現・受動的な言い回し・思考停止ワードの有無
+②論理構成スコア（0〜25点）：序論・本論・結論の流れ・反論への言及・独自視点の有無
+③情報の具体性スコア（0〜25点）：固有名詞・数値データ・具体的事例の充実度
+④文章の自然さスコア（0〜25点）：語尾の多様性・文末表現・人間らしい言い回しの有無
+
+【出力形式（必ずこの形式で出力すること）】
+総合評価：〇（A/B/C/D/E/F）
+総合点：〇〇 / 100点
+
+①AI臭スコア：〇〇 / 25点
+②論理構成スコア：〇〇 / 25点
+③情報の具体性スコア：〇〇 / 25点
+④文章の自然さスコア：〇〇 / 25点
+
+【総評】
+（2〜3文で総合的な評価を述べる）
+
+【改善が必要な箇所】
+（具体的に2〜3点指摘する）
+
+---
+【評価対象レポート】
+${text}`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: checkPrompt, mode: 'generate', researchData: '' })
+    });
+    const data = await res.json();
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    result.textContent = data.error ? 'エラー：' + data.error : data.result;
+    area.classList.remove('hidden');
+  } catch(e) {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    alert('エラーが発生しました。もう一度お試しください。');
+  }
+}
+
+// 初期化
+renderReportList();
+loadDraft();
+updateStepNav();
+updateStepView();
+</script>
+</body>
+</html>
