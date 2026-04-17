@@ -6,43 +6,73 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { prompt } = req.body;
+  const { prompt, mode, researchData } = req.body;
   if (!prompt) return res.status(400).json({ error: 'prompt is required' });
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
-  const factCheckSystemPrompt = `あなたは事実確認の専門家です。以下のルールを絶対に守れ。
+  // ── モード1：調査項目リストの生成 ──────────────────────────
+  if (mode === 'research') {
+    const researchPrompt = `あなたはレポート執筆の調査設計の専門家です。
 
-【最重要：不確かな情報への対処】
-・企業の設立年・従業員数・売上・拠点数など、細部の数値が不確かな場合は「設立年不明」「規模不明」と正直に書け。企業の存在自体は確認できても、細部が不明な場合は細部だけを「不明」とし、企業の存在を否定するな
-・実在する企業・団体・人物を「存在しない」と断じることを厳禁する。存在は確認できるが詳細が不明な場合は「詳細不明」と書け
-・数値・統計は出典（省庁名・機関名）が明確なもののみ使用する。出典不明の数値は「出典不明のため使用不可」とする
-・URLや出典を求められた場合、存在しないURLを作ることを厳禁する。出典が不明な場合は「出典確認不可」と書け
+ユーザーが以下のテーマでレポートを書こうとしています。このレポートを「事実に基づいた信頼性の高いもの」にするために、ユーザー自身が事前に調べて確認すべき項目をリストアップしてください。
 
-【出力形式】
-以下の形式で出力せよ。不明なものは正直に記載し、絶対に推測・捏造で埋めるな。
+【ルール】
+・AIが勝手に数値や企業名を作ることを防ぐため、ユーザーに調べてもらう項目を具体的に提示する
+・各項目には「どこで調べられるか（調査先）」を併記する
+・項目は5〜8個程度にまとめる
+・以下の形式で出力する
 
-■ 確実に実在が確認できる固有名詞（企業・団体・地名・制度）：
-（存在は確実だが細部が不明な場合は「存在確認済み・詳細不明」と明記）
+---
+【このレポートに必要な調査項目】
 
-■ 出典が明確な数値・統計：
-（出典省庁・機関名を必ず併記。不明なものは記載しない）
+①【項目名】
+・調べる内容：（具体的に何を調べるか）
+・調査先の例：（公式サイト・省庁・報道機関など）
+・記入欄：（ユーザーが後で記入する空欄）
 
-■ 確実に正しいと言える事実：
-（確実なもののみ。不確かな場合は記載しない）
+②…（以下同様）
+---
 
-■ 不明・不確かなため使用しない情報：
-（ここに正直に列挙する）`;
+余計な説明は不要。調査項目リストのみ出力せよ。`;
 
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: researchPrompt },
+            { role: 'user', content: `テーマ：${prompt}` }
+          ],
+          max_tokens: 1000,
+          temperature: 0.3
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
+      const text = data.choices?.[0]?.message?.content || '';
+      return res.status(200).json({ result: text });
+    } catch (err) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // ── モード2：レポート生成（ユーザーの調査データを使用） ────────
   const reportSystemPrompt = `君は今から「自分が確認できた事実しか書かない、誠実で知的好奇心旺盛な大学生」として大学レポートを執筆する。
 
-【最重要：事実の扱いに関する絶対ルール】
-・直前の事実確認リストに含まれる情報のみを使用する。リスト外の固有名詞・数値・統計の追加を厳禁する
-・事実リストで「詳細不明」とされた情報の細部を補完・推測して書くことを厳禁する
-・実在する企業・団体・人物の設立年・規模・業績などの細部が不明な場合は、その細部に触れず「〜として知られる企業」「〜を手がける団体」と書くにとどめる
-・存在が確認できない固有名詞・数値・統計を一切使わない
-・URLや出典を書く場合、実在しないURLを作ることを厳禁する。出典が不明な場合は記載しない
+【最重要：使用できる情報の制限】
+・ユーザーが自分で調べて入力した「調査済みデータ」に含まれる情報のみを使用する
+・調査済みデータにない固有名詞・数値・統計を追加・補完・推測することを厳禁する
+・調査済みデータで空欄・不明とされた項目の内容を勝手に埋めることを厳禁する
+・実在する企業・団体を「存在しない」と断じることを厳禁する
+・存在しないURLを作ることを厳禁する
 
 【絶対禁止：思考停止ワード】
 「最高」「怖い」「重要である」「大切である」「必要である」「社会的意義がある」「注目されている」「求められている」「寄与する」「持続可能な」「様々な」「多くの」「イノベーション」「シナジー」「グローバル」「多様性」
@@ -53,7 +83,7 @@ export default async function handler(req, res) {
 ・接続詞（しかし・したがって・一方で）の後は必ず新しい情報・視点を続ける
 ・同じ内容の重複表現を禁じる
 ・「対策が必要だ」と書く場合は具体的な施策を必ず提示する
-・固有名詞は事実リストから最低5つ使う（存在確認済みのもののみ）
+・調査済みデータから固有名詞を最低3つ使う
 ・本論に執筆者自身の観察を1箇所挿入する
 
 【文末の多様化・5種類以上・2文連続禁止】
@@ -68,7 +98,7 @@ export default async function handler(req, res) {
 
 【構成・厳守】
 ①タイトル：「タイトル：〇〇」形式
-②序論：「〜という問いに対し、私は〜という立場から答える」形式
+②序論：「〜という問いに対し、私は〜という立場から答える」形式。「本稿では〜を論じる」禁止
 ③本論A：具体的事例＋根拠＋意義の三段構成。執筆者の観察を1箇所挿入
 ④本論B：「〜という反論が予想される」→論理的に論破→具体的施策を提示
 ⑤結論：「私は〜と予測する」の一人称予測必須。最後は断言。「〜だろう」禁止
@@ -79,9 +109,8 @@ export default async function handler(req, res) {
 レベル4〜5：鋭い分析・専門用語を適切に活用・施策の具体性を最大化
 
 【最終校正チェック】
-□ 事実リスト外の固有名詞・数値を使っていないか
-□ 「詳細不明」の情報の細部を補完していないか
-□ 実在する企業・団体を「存在しない」と書いていないか
+□ 調査済みデータ外の固有名詞・数値を使っていないか
+□ 空欄・不明項目を勝手に補完していないか
 □ 存在しないURLを作っていないか
 □ 思考停止ワードがゼロか
 □ 英単語・アルファベットが混入していないか
@@ -93,35 +122,7 @@ export default async function handler(req, res) {
 □ 1段落150字以上か`;
 
   try {
-    // ステップ1：低温度で事実確認リストを生成
-    const factCheckResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: factCheckSystemPrompt },
-          {
-            role: 'user',
-            content: `以下のテーマ・情報をもとに、レポートで使用できる「確実な事実リスト」を作成せよ。不明なものは正直に「不明」と書け。実在する企業・団体の存在を否定することを厳禁する。細部が不明な場合は細部のみを「不明」とせよ。捏造・推測での補完は厳禁。\n\n${prompt}`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.05
-      })
-    });
-
-    const factData = await factCheckResponse.json();
-    if (!factCheckResponse.ok) {
-      return res.status(factCheckResponse.status).json({ error: factData.error?.message || 'API error' });
-    }
-    const factList = factData.choices?.[0]?.message?.content || '';
-
-    // ステップ2：事実リストのみを使ってレポートを生成
-    const reportResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ export default async function handler(req, res) {
           { role: 'system', content: reportSystemPrompt },
           {
             role: 'user',
-            content: `【確認済み事実リスト（これ以外の固有名詞・数値・統計の使用を厳禁する）】\n${factList}\n\n【レポート生成指示】\n${prompt}\n\n上記の確認済み事実リストに含まれる情報のみを使用してレポートを作成せよ。リストにない情報の追加・補完・推測を厳禁する。「詳細不明」とされた情報の細部を勝手に埋めることを厳禁する。`
+            content: `【ユーザーが自分で調べた調査済みデータ（これ以外の固有名詞・数値の使用を厳禁）】\n${researchData || '（調査データなし）'}\n\n【レポート生成指示】\n${prompt}\n\n調査済みデータに含まれる情報のみを使用してレポートを作成せよ。データにない情報の追加・補完・推測を厳禁する。`
           }
         ],
         max_tokens: 3500,
@@ -141,14 +142,10 @@ export default async function handler(req, res) {
       })
     });
 
-    const reportData = await reportResponse.json();
-    if (!reportResponse.ok) {
-      return res.status(reportResponse.status).json({ error: reportData.error?.message || 'API error' });
-    }
-
-    const text = reportData.choices?.[0]?.message?.content || '';
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
+    const text = data.choices?.[0]?.message?.content || '';
     return res.status(200).json({ result: text });
-
   } catch (err) {
     return res.status(500).json({ error: 'Internal server error' });
   }
