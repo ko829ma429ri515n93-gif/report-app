@@ -283,7 +283,16 @@
               <button class="btn-secondary" onclick="copyResult('l')">コピー</button>
               <span id="l-copyOk" class="copy-ok hidden">✓ コピーしました</span>
               <button class="btn-secondary" onclick="openPreview('l')">プレビュー</button>
-              <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
+             function checkWithAI(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  if (!text) return;
+  const prompt = `これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）。改善点も具体的に教えてください。\n\n${text}`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    alert('✓ AI検査用プロンプトをコピーしました！\nお気に入りのAI（ChatGPT・Geminiなど）に貼り付けてください。');
+  });
+}
+             <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
+              <button class="btn-secondary" onclick="checkWithAI('l')">🔍 AIで検査する</button>
             </div>
           </div>
         </div>
@@ -387,7 +396,16 @@
               <button class="btn-secondary" onclick="copyResult('e')">コピー</button>
               <span id="e-copyOk" class="copy-ok hidden">✓ コピーしました</span>
               <button class="btn-secondary" onclick="openPreview('e')">プレビュー</button>
-              <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+             function checkWithAI(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  if (!text) return;
+  const prompt = `これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）。改善点も具体的に教えてください。\n\n${text}`;
+  navigator.clipboard.writeText(prompt).then(() => {
+    alert('✓ AI検査用プロンプトをコピーしました！\nお気に入りのAI（ChatGPT・Geminiなど）に貼り付けてください。');
+  });
+}
+             <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+              <button class="btn-secondary" onclick="checkWithAI('e')">🔍 AIで検査する</button>
             </div>
           </div>
         </div>
