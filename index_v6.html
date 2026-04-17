@@ -212,7 +212,19 @@
           </div>
         </div>
       </div>
-      <button class="btn-primary" id="l-genBtn" onclick="generateReport('lecture')">✦ レポートを生成する</button>
+      <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:13px;color:#6b6860;line-height:1.8">
+  <p style="font-weight:600;color:#1a1a18;margin-bottom:8px">💬 生成後の確認方法（任意）</p>
+  <p style="margin-bottom:10px">心配な方は、生成されたレポートをお気に入りのAIにコピー＆ペーストして以下のプロンプトを試してみてください。</p>
+  <div style="background:#ffffff;border:1px solid #c8c5be;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#1a1a18">
+    <p style="font-weight:600;color:#E8641A;margin-bottom:4px">① AI検知チェック用</p>
+    <p style="color:#444441">「これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）」</p>
+  </div>
+  <div style="background:#ffffff;border:1px solid #c8c5be;border-radius:8px;padding:10px 12px;font-size:12px;color:#1a1a18">
+    <p style="font-weight:600;color:#E8641A;margin-bottom:4px">② ファクトチェック用</p>
+    <p style="color:#444441">「あなたはプロのリサーチャーです。このレポートに記載されている情報のファクトチェックを行ってください。また、データが正しくない場合は正しい情報もDeep Research機能を活用してリサーチして教えてください」</p>
+  </div>
+</div>
+     <button class="btn-primary" id="l-genBtn" onclick="generateReport('lecture')">✦ レポートを生成する</button>
       <div id="l-loading" class="hidden" style="margin-top:1rem">
         <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="l-loadingMsg">AIがレポートを作成しています...</span></div>
       </div>
@@ -311,7 +323,19 @@
           </div>
         </div>
       </div>
-      <button class="btn-primary" id="e-genBtn" onclick="generateReport('experiment')">✦ レポートを生成する</button>
+     <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:13px;color:#6b6860;line-height:1.8">
+  <p style="font-weight:600;color:#1a1a18;margin-bottom:8px">💬 生成後の確認方法（任意）</p>
+  <p style="margin-bottom:10px">心配な方は、生成されたレポートをお気に入りのAIにコピー＆ペーストして以下のプロンプトを試してみてください。</p>
+  <div style="background:#ffffff;border:1px solid #c8c5be;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#1a1a18">
+    <p style="font-weight:600;color:#E8641A;margin-bottom:4px">① AI検知チェック用</p>
+    <p style="color:#444441">「これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）」</p>
+  </div>
+  <div style="background:#ffffff;border:1px solid #c8c5be;border-radius:8px;padding:10px 12px;font-size:12px;color:#1a1a18">
+    <p style="font-weight:600;color:#E8641A;margin-bottom:4px">② ファクトチェック用</p>
+    <p style="color:#444441">「あなたはプロのリサーチャーです。このレポートに記載されている情報のファクトチェックを行ってください。また、データが正しくない場合は正しい情報もDeep Research機能を活用してリサーチして教えてください」</p>
+  </div>
+</div> 
+     <button class="btn-primary" id="e-genBtn" onclick="generateReport('experiment')">✦ レポートを生成する</button>
       <div id="e-loading" class="hidden" style="margin-top:1rem">
         <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span id="e-loadingMsg">AIがレポートを作成しています...</span></div>
       </div>
