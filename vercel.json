@@ -1,11 +1,11 @@
 {
   "version": 2,
   "builds": [
-    { "src": "generate.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" }
+    { "src": "generate_v2.js", "use": "@vercel/node" },
+    { "src": "index_v6.html", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/generate", "dest": "/generate.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/api/generate", "dest": "/generate_v2.js" },
+    { "src": "/(.*)", "dest": "/index_v6.html" }
   ]
 }
