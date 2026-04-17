@@ -283,16 +283,17 @@
               <button class="btn-secondary" onclick="copyResult('l')">コピー</button>
               <span id="l-copyOk" class="copy-ok hidden">✓ コピーしました</span>
               <button class="btn-secondary" onclick="openPreview('l')">プレビュー</button>
-             function checkWithAI(prefix) {
-  const text = document.getElementById(prefix+'-resultText').textContent;
-  if (!text) return;
-  const prompt = `これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）。改善点も具体的に教えてください。\n\n${text}`;
-  navigator.clipboard.writeText(prompt).then(() => {
-    alert('✓ AI検査用プロンプトをコピーしました！\nお気に入りのAI（ChatGPT・Geminiなど）に貼り付けてください。');
-  });
-}
-             <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
-              <button class="btn-secondary" id="l-checkBtn" onclick="checkReport('l')">🔍 AI検査</button>
+              <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
+              <button class="btn-secondary" id="l-checkBtn" onclick="checkReport('l')" style="background:#fff0e6;border-color:#f5c4b3;color:#993C1D">🔍 AI検査</button>
+            </div>
+            <div id="l-checkLoading" class="hidden" style="margin-top:8px">
+              <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>AIが評価中...</span></div>
+            </div>
+            <div id="l-checkArea" class="hidden" style="margin-top:12px">
+              <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px">
+                <p style="font-weight:600;font-size:14px;margin-bottom:10px">🔍 AI検査結果</p>
+                <div id="l-checkResult" style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1a1a18"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -396,16 +397,17 @@
               <button class="btn-secondary" onclick="copyResult('e')">コピー</button>
               <span id="e-copyOk" class="copy-ok hidden">✓ コピーしました</span>
               <button class="btn-secondary" onclick="openPreview('e')">プレビュー</button>
-             function checkWithAI(prefix) {
-  const text = document.getElementById(prefix+'-resultText').textContent;
-  if (!text) return;
-  const prompt = `これまでの記憶をなくして、あなたはこのレポートを初めて見るAIに精通している厳しい教授です。あなたはAIのみで書いたレポートを絶対に許しません。そのうえで以下のレポートを見て評価をつけてください（A〜F）。改善点も具体的に教えてください。\n\n${text}`;
-  navigator.clipboard.writeText(prompt).then(() => {
-    alert('✓ AI検査用プロンプトをコピーしました！\nお気に入りのAI（ChatGPT・Geminiなど）に貼り付けてください。');
-  });
-}
-            <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
-              <button class="btn-secondary" id="e-checkBtn" onclick="checkReport('e')">🔍 AI検査</button>
+              <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+              <button class="btn-secondary" id="e-checkBtn" onclick="checkReport('e')" style="background:#fff0e6;border-color:#f5c4b3;color:#993C1D">🔍 AI検査</button>
+            </div>
+            <div id="e-checkLoading" class="hidden" style="margin-top:8px">
+              <div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>AIが評価中...</span></div>
+            </div>
+            <div id="e-checkArea" class="hidden" style="margin-top:12px">
+              <div style="background:#f5f3ef;border:1px solid #e2e0da;border-radius:10px;padding:14px 16px">
+                <p style="font-weight:600;font-size:14px;margin-bottom:10px">🔍 AI検査結果</p>
+                <div id="e-checkResult" style="font-size:13px;line-height:1.8;white-space:pre-wrap;color:#1a1a18"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -786,6 +788,65 @@ function closePreview() {
 
 document.addEventListener('input', e => { if (e.target.matches('input,select,textarea')) scheduleSave(); });
 document.addEventListener('change', e => { if (e.target.matches('select')) scheduleSave(); });
+
+// ── AI検査 ──────────────────────────────────────
+async function checkReport(prefix) {
+  const text = document.getElementById(prefix+'-resultText').textContent;
+  if (!text || text.startsWith('エラー')) { alert('先にレポートを生成してください。'); return; }
+
+  const btn = document.getElementById(prefix+'-checkBtn');
+  const loading = document.getElementById(prefix+'-checkLoading');
+  const area = document.getElementById(prefix+'-checkArea');
+  const result = document.getElementById(prefix+'-checkResult');
+
+  btn.disabled = true;
+  loading.classList.remove('hidden');
+  area.classList.add('hidden');
+
+  const checkPrompt = `あなたはAIが生成した文章の検査に特化した厳格な大学教授です。以下のレポートを評価してください。
+
+【評価項目と配点】
+①AI臭スコア（0〜25点）：AIっぽい定型表現・受動的な言い回し・思考停止ワードの有無
+②論理構成スコア（0〜25点）：序論・本論・結論の流れ・反論への言及・独自視点の有無
+③情報の具体性スコア（0〜25点）：固有名詞・数値データ・具体的事例の充実度
+④文章の自然さスコア（0〜25点）：語尾の多様性・文末表現・人間らしい言い回しの有無
+
+【出力形式（必ずこの形式で出力すること）】
+総合評価：〇（A/B/C/D/E/F）
+総合点：〇〇 / 100点
+
+①AI臭スコア：〇〇 / 25点
+②論理構成スコア：〇〇 / 25点
+③情報の具体性スコア：〇〇 / 25点
+④文章の自然さスコア：〇〇 / 25点
+
+【総評】
+（2〜3文で総合的な評価を述べる）
+
+【改善が必要な箇所】
+（具体的に2〜3点指摘する）
+
+---
+【評価対象レポート】
+${text}`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: checkPrompt, mode: 'generate', researchData: '' })
+    });
+    const data = await res.json();
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    result.textContent = data.error ? 'エラー：' + data.error : data.result;
+    area.classList.remove('hidden');
+  } catch(e) {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    alert('エラーが発生しました。もう一度お試しください。');
+  }
+}
 
 // 初期化
 renderReportList();
