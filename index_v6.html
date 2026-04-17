@@ -292,7 +292,7 @@
   });
 }
              <button class="btn-secondary" onclick="generateReport('lecture')">↺ 再生成</button>
-              <button class="btn-secondary" onclick="checkWithAI('l')">🔍 AIで検査する</button>
+              <button class="btn-secondary" id="l-checkBtn" onclick="checkReport('l')">🔍 AI検査</button>
             </div>
           </div>
         </div>
@@ -404,8 +404,8 @@
     alert('✓ AI検査用プロンプトをコピーしました！\nお気に入りのAI（ChatGPT・Geminiなど）に貼り付けてください。');
   });
 }
-             <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
-              <button class="btn-secondary" onclick="checkWithAI('e')">🔍 AIで検査する</button>
+            <button class="btn-secondary" onclick="generateReport('experiment')">↺ 再生成</button>
+              <button class="btn-secondary" id="e-checkBtn" onclick="checkReport('e')">🔍 AI検査</button>
             </div>
           </div>
         </div>
