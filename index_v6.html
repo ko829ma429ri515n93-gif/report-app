@@ -461,9 +461,17 @@ function getReports() {
 function saveReport(title, content, type) {
   const reports = getReports();
   const id = Date.now().toString();
+  // 入力情報も一緒に保存
+  const inputIds = ['l-dept','l-ltype','l-theme','l-length','l-grade','l-memo','l-reference',
+                    'l-style','l-level','l-research-data',
+                    'e-title','e-length','e-grade','e-purpose','e-equip',
+                    'e-method','e-result','e-discussion','e-style','e-level','e-research-data'];
+  const inputData = { mode };
+  inputIds.forEach(id => { const el = document.getElementById(id); if (el) inputData[id] = el.value; });
+
   reports.unshift({
     id, title: title || '無題のレポート',
-    content, type,
+    content, type, inputData,
     date: new Date().toLocaleDateString('ja-JP')
   });
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
@@ -483,6 +491,38 @@ function openReport(id) {
   if (!r) return;
   document.getElementById('previewBody').textContent = r.content;
   document.getElementById('previewOverlay').classList.remove('hidden');
+}
+
+function loadReport(id) {
+  const reports = getReports();
+  const r = reports.find(r => r.id === id);
+  if (!r) return;
+
+  // 入力データを復元
+  if (r.inputData) {
+    const m = r.inputData.mode || r.type || 'lecture';
+    setMode(m);
+    Object.keys(r.inputData).forEach(key => {
+      if (key === 'mode') return;
+      const el = document.getElementById(key);
+      if (el) el.value = r.inputData[key];
+    });
+  } else {
+    setMode(r.type || 'lecture');
+  }
+
+  // エディタページに遷移してステップ3（生成結果）を表示
+  showPage('editor');
+  goStep(3);
+
+  // 生成済みレポートを表示
+  const prefix = (r.type === 'experiment') ? 'e' : 'l';
+  setTimeout(() => {
+    const resultText = document.getElementById(prefix + '-resultText');
+    const resultArea = document.getElementById(prefix + '-resultArea');
+    if (resultText) resultText.textContent = r.content;
+    if (resultArea) resultArea.classList.remove('hidden');
+  }, 100);
 }
 
 function renderReportList() {
@@ -505,7 +545,8 @@ function renderReportList() {
         <span class="report-card-tag${r.type === 'experiment' ? ' exp' : ''}">${r.type === 'experiment' ? '実験' : '講義'}</span>
       </div>
       <div class="report-card-actions">
-        <button class="btn-secondary" style="font-size:12px;padding:5px 12px" onclick="openReport('${r.id}')">開く</button>
+        <button class="btn-secondary" style="font-size:12px;padding:5px 12px" onclick="loadReport('${r.id}')">編集・確認</button>
+        <button class="btn-secondary" style="font-size:12px;padding:5px 12px" onclick="openReport('${r.id}')">プレビュー</button>
         <button class="btn-card-del" onclick="deleteReport('${r.id}')">削除</button>
       </div>
     </div>`).join('')}</div>`;
