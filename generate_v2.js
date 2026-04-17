@@ -42,10 +42,14 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `テーマ：${prompt}` }],
-          max_tokens: 1000, temperature: 0.3
-        })
+        model: mode === 'generate' ? 'llama-3.3-70b-versatile' : 'llama3-8b-8192',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: mode === 'generate' ? 3500 : 2000,
+        temperature: 0.93
+      })
       });
       const data = await response.json();
       if (!response.ok) return res.status(response.status).json({ error: data.error?.message || 'API error' });
